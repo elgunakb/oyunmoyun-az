@@ -1,0 +1,32 @@
+import React from 'react';
+import Logo from '../../assets/oyunmoyun-logo.svg';
+import LanguageSelector from '../LanguageSelector/LanguageSelector';
+
+export default function Header() {
+  return (
+    <header className='relative z-60 overflow-visible'>
+      <div className='pointer-events-none absolute inset-0 bg-slate-900/40 backdrop-blur-xl border-b border-white/10' />
+
+      <div className='relative z-10 grid items-center h-[100px] px-4 sm:px-6 grid-cols-2 md:grid-cols-[1fr_auto_1fr]'>
+        {/* Logo*/}
+        <a
+          href='#'
+          className='justify-self-start md:justify-self-center md:col-start-2 block'
+        >
+          <div className='h-[76px] sm:h-[84px] w-auto relative transform hover:-rotate-1 hover:scale-105 transition-all duration-300'>
+            <img
+              src={Logo}
+              alt='logo'
+              className='h-full w-auto object-contain block'
+            />
+          </div>
+        </a>
+
+        {/* Language switcher */}
+        <div className='justify-self-end md:col-start-3 relative z-50 overflow-visible'>
+          <LanguageSelector />
+        </div>
+      </div>
+    </header>
+  );
+}
