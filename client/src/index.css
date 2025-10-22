@@ -1,0 +1,51 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+@import 'tailwindcss';
+
+@theme {
+    --font-display: 'Space Mono', monospace;
+    --breakpoint-3xl: 1920px;
+    --color-primary: #00a7f3;
+    --scroll-color-primary: #3e1e68;
+}
+
+@layer base {
+    html {
+        font-family: var(--font-display);
+    }
+
+    body {
+        /* Background image */
+        background-image: url(./assets/bg.png);
+        background-attachment: fixed;
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: center;
+        background-color: #1e1e2f;
+        overflow-x: hidden;
+    }
+
+    /* Scroll */
+    html::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    html::-webkit-scrollbar-track {
+        background: #0f0f18;
+    }
+
+    html::-webkit-scrollbar-thumb {
+        background: var(--scroll-color-primary);
+        border-radius: 8px;
+        border: 2px solid #18202f;
+    }
+
+    html::-webkit-scrollbar-thumb:hover {
+        filter: brightness(0.9);
+    }
+
+    html {
+        scrollbar-width: thin;
+        scrollbar-color: var(--scroll-color-primary) #171f2e;
+    }
+}
