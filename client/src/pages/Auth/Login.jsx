@@ -1,25 +1,88 @@
 import { AlertCircle, Loader, User } from 'lucide-react';
 import React, { useState } from 'react';
+import { supabase } from '../../lib/supabaseClient';
+import { API_PATHS } from '../../utils/apiPaths';
+import { useAuth } from '../../context/AuthContext';
+import axiosInstance from '../../utils/axiosInstance';
 
 const Login = () => {
-  const [formData, setFormData] = useState({
-    nickname: '',
-  });
+  const { login } = useAuth();
+
+  const [formData, setFormData] = useState({ nickname: '' });
 
   const [formState, setFormState] = useState({
     loading: false,
     errors: {},
-    showPassword: false,
     success: false,
   });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (formState.errors[name]) {
+      setFormState((p) => ({ ...p, errors: { ...p.errors, [name]: '' } }));
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    const nickname = formData.nickname.trim();
+
+    // Sadə validation
+    if (nickname.length < 3) {
+      setFormState((p) => ({
+        ...p,
+        errors: { ...p.errors, nickname: 'Minimum 3 simvol' },
+      }));
+      return;
+    }
+
+    setFormState((p) => ({
+      ...p,
+      loading: true,
+      errors: { ...p.errors, submit: '' },
+    }));
+    try {
+      const { data } = await axiosInstance.post(API_PATHS.AUTH.GUEST, {
+        nickname,
+      });
+      // server { user, expires } verir
+      login(data); // token yoxdur
+      window.location.href = '/'; // istədiyin səhifə
+    } catch (error) {
+      setFormState((p) => ({
+        ...p,
+        errors: {
+          ...p.errors,
+          submit: error?.response?.data?.message || 'Qonaq girişi alınmadı',
+        },
+      }));
+    } finally {
+      setFormState((p) => ({ ...p, loading: false }));
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: { access_type: 'offline', prompt: 'consent' },
+        },
+      });
+      if (error) {
+        setFormState((prev) => ({
+          ...prev,
+          errors: { ...prev.errors, submit: error.message },
+        }));
+      }
+    } catch (e) {
+      setFormState((prev) => ({
+        ...prev,
+        errors: { ...prev.errors, submit: e.message || 'Google login xətası' },
+      }));
+    }
   };
 
   return (
@@ -31,76 +94,60 @@ const Login = () => {
           </h2>
         </div>
 
-        {/* sign in with google  */}
+        {/* sign in with google */}
         <div className="mb-2">
           <button
             type="button"
-            class="w-full flex items-center justify-center gap-3 py-3.5 px-4 bg-transparent border border-gray-700 rounded-xl hover:bg-gray-800 text-white font-medium mb-3"
+            onClick={handleGoogleLogin}
+            className="w-full bg-white text-black py-3 rounded-lg font-semibold hover:opacity-90 transition flex items-center justify-center space-x-2"
+            aria-label="Sign in with Google"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20px"
-              class="inline"
-              viewBox="0 0 512 512"
-            >
+            {/* Google icon SVG */}
+            <svg width="18" height="18" viewBox="0 0 48 48" className="mr-2">
               <path
-                fill="#fbbd00"
-                d="M120 256c0-25.367 6.989-49.13 19.131-69.477v-86.308H52.823C18.568 144.703 0 198.922 0 256s18.568 111.297 52.823 155.785h86.308v-86.308C126.989 305.13 120 281.367 120 256z"
-                data-original="#fbbd00"
+                fill="#FFC107"
+                d="M43.611 20.083H42V20H24v8h11.303C33.607 32.329 29.223 35 24 35c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.153 7.961 3.039l5.657-5.657C34.537 5.116 29.566 3 24 3 12.955 3 4 11.955 4 23s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.652-.389-3.917z"
               />
               <path
-                fill="#0f9d58"
-                d="m256 392-60 60 60 60c57.079 0 111.297-18.568 155.785-52.823v-86.216h-86.216C305.044 385.147 281.181 392 256 392z"
-                data-original="#0f9d58"
+                fill="#FF3D00"
+                d="M6.306 14.691l6.571 4.814C14.6 16.108 18.938 13 24 13c3.059 0 5.842 1.153 7.961 3.039l5.657-5.657C34.537 5.116 29.566 3 24 3 16.318 3 9.676 7.337 6.306 14.691z"
               />
               <path
-                fill="#31aa52"
-                d="m139.131 325.477-86.308 86.308a260.085 260.085 0 0 0 22.158 25.235C123.333 485.371 187.62 512 256 512V392c-49.624 0-93.117-26.72-116.869-66.523z"
-                data-original="#31aa52"
+                fill="#4CAF50"
+                d="M24 43c5.166 0 9.86-1.977 13.393-5.197l-6.18-5.238C29.13 34.091 26.691 35 24 35c-5.192 0-9.567-3.292-11.157-7.892l-6.54 5.036C9.63 38.73 16.274 43 24 43z"
               />
               <path
-                fill="#3c79e6"
-                d="M512 256a258.24 258.24 0 0 0-4.192-46.377l-2.251-12.299H256v120h121.452a135.385 135.385 0 0 1-51.884 55.638l86.216 86.216a260.085 260.085 0 0 0 25.235-22.158C485.371 388.667 512 324.38 512 256z"
-                data-original="#3c79e6"
-              />
-              <path
-                fill="#cf2d48"
-                d="m352.167 159.833 10.606 10.606 84.853-84.852-10.606-10.606C388.668 26.629 324.381 0 256 0l-60 60 60 60c36.326 0 70.479 14.146 96.167 39.833z"
-                data-original="#cf2d48"
-              />
-              <path
-                fill="#eb4132"
-                d="M256 120V0C187.62 0 123.333 26.629 74.98 74.98a259.849 259.849 0 0 0-22.158 25.235l86.308 86.308C162.883 146.72 206.376 120 256 120z"
-                data-original="#eb4132"
+                fill="#1976D2"
+                d="M43.611 20.083H42V20H24v8h11.303c-1.008 2.927-3.162 5.229-5.79 6.565l.001.001 6.18 5.238C37.242 41.246 44 36 44 23c0-1.341-.138-2.652-.389-3.917z"
               />
             </svg>
-            Google ilə giriş edin
+            Google ilə daxil ol
           </button>
         </div>
 
         {/* or */}
-        <div className="my-6 flex items-center before:mt-0.5 before:flex-1 before:border-t before:border-neutral-300 after:mt-0.5 after:flex-1 after:border-t after:border-neutral-300">
+        <div className="my-6 flex items-center before:flex-1 before:border-t before:border-neutral-300 after:flex-1 after:border-t after:border-neutral-300">
           <p className="mx-4 text-center text-white">Və ya</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* nickname */}
           <div>
-            <label className="block text-sm font-medium bg-transparent mb-2 text-white">
+            <label className="block text-sm font-medium mb-2 text-white">
               Ləqəb *
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white w-5 h-5" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-white w-5 h-5" />
               <input
                 type="text"
                 name="nickname"
                 value={formData.nickname}
                 onChange={handleInputChange}
-                className={`w-full pl-10 pr-4 py-4 text-white rounded-lg border-gray-700 border ${
+                className={`w-full pl-10 pr-4 py-4 text-white rounded-lg border ${
                   formState.errors.nickname
                     ? 'border-red-500'
-                    : 'border-gray-300'
-                } focus:outline-none focus:ring-0 focus:border-gray-700 transition-colors`}
+                    : 'border-gray-700'
+                } focus:outline-none focus:ring-0 focus:border-gray-500 transition-colors bg-transparent placeholder-gray-400`}
                 placeholder="Oyunda görsənəcək ləqəb daxil et"
               />
             </div>
@@ -114,19 +161,19 @@ const Login = () => {
 
           {/* Submit Error */}
           {formState.errors.submit && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-red-700 text-sm flex items-center">
+            <div className="bg-red-50/10 border border-red-400/50 rounded-lg p-3">
+              <p className="text-red-400 text-sm flex items-center">
                 <AlertCircle className="w-4 h-4 mr-2" />
                 {formState.errors.submit}
               </p>
             </div>
           )}
 
-          {/* Submit Button */}
+          {/* Submit Button (guest) */}
           <button
             type="submit"
             disabled={formState.loading || formData.nickname.trim().length < 3}
-            className="w-full text- bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            className="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
           >
             {formState.loading ? (
               <>
@@ -134,7 +181,7 @@ const Login = () => {
                 <span>Hesab yaradılır...</span>
               </>
             ) : (
-              <span>Hesab yaradın</span>
+              <span>Qonaq kimi daxil ol</span>
             )}
           </button>
         </form>

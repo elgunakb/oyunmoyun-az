@@ -5,44 +5,51 @@ import {
   Navigate,
 } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+
 import Login from './pages/Auth/Login';
-// import { AuthProvider } from './context/AuthContext';
-import SignUp from './pages/Auth/SignUp';
-import Home from './pages/Home/Home';
 import MyProfile from './pages/MyProfile/MyProfile';
 import ProtectedRoute from '../routes/ProtectedRoute';
+import GuestRoute from '../routes/GuestRoute';
 import LandingPage from './pages/LandingPage/LandingPage';
+import { AuthProvider } from './context/AuthContext';
+import AuthCallback from './pages/Auth/AuthCallBack';
+import Header from './components/Header/Header';
 
 const App = () => {
   return (
     <>
-      {/* // <AuthProvider> */}
-      <Router>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/login" element={<Login />} />
+      <AuthProvider>
+        <Header />
 
-          {/* Login routes */}
-          <Route element={<ProtectedRoute requiredRole="employer" />}>
-            <Route path="/profile" element={<MyProfile />} />
-          </Route>
+        <Router>
+          <Routes>
+            {/* OAuth callback public qalır */}
+            <Route path="/auth/callback" element={<AuthCallback />} />
 
-          {/* not found page */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
-      <Toaster
-        toastOptions={{
-          className: '',
-          style: {
-            fontSize: '12px',
-          },
-        }}
-      />
+            {/* Login: yalnız qonaq görə bilsin */}
+            <Route element={<GuestRoute />}>
+              <Route path="/login" element={<Login />} />
+            </Route>
+
+            {/* Qorumalı route-lar */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/profile" element={<MyProfile />} />
+            </Route>
+
+            {/* 404 */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+
+        <Toaster
+          toastOptions={{
+            className: '',
+            style: { fontSize: '12px' },
+          }}
+        />
+      </AuthProvider>
     </>
-    // </AuthProvider>
   );
 };
 

@@ -2,8 +2,8 @@ import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../src/context/AuthContext';
 
-export default function ProtectedRoute({ requiredRole }) {
-  const { isAuthenticated, loading, user } = useAuth();
+export default function GuestRoute() {
+  const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -14,9 +14,10 @@ export default function ProtectedRoute({ requiredRole }) {
     );
   }
 
-  if (!isAuthenticated) {
-    // yalnız login-ə burax
-    return <Navigate to="/login" state={{ from: location }} replace />;
+  if (isAuthenticated) {
+    // artıq login olubsa, geri istiqamətləndir
+    const from = location.state?.from?.pathname || '/';
+    return <Navigate to={from} replace />;
   }
 
   return <Outlet />;
