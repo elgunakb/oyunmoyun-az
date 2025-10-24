@@ -63,7 +63,7 @@ const swaggerOptions = {
   definition: {
     openapi: '3.0.3',
     info: {
-      title: 'Is-Tap-Az API',
+      title: 'QuizOne API',
       version: '1.0.0',
       description: 'MERN layihəsi üçün Swagger/OpenAPI sənədləşdirməsi',
     },

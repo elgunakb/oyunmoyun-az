@@ -9,6 +9,7 @@ export default function Navbar() {
           <div className="flex items-center gap-1 text-[#EEEEEE]">
             {NAV_LINKS.map((link) => (
               <a
+                key={link.label}
                 href={link.href}
                 className="transition-all duration-200 py-0.5 px-1.5 text-sm font-mono rounded hover:bg-white/5 hover:text-white/80"
               >

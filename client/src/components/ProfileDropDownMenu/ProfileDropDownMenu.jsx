@@ -19,20 +19,16 @@ export default function ProfileDropDownMenu({ user, logout }) {
 
   return (
     <div className="relative" ref={ref}>
-      {/* Button */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white hover:bg-white/10 transition"
+        className="flex items-center gap-3 px-3.5 h-10 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-md border border-gray-500/50"
       >
         {user?.image ? (
-          <img
-            src={user.image}
-            alt={user.name}
-            className="w-5 h-5 rounded-full"
-            referrerPolicy="no-referrer"
-          />
+          <div className="w-6 h-6 rounded-lg bg-linear-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-medium text-sm shadow-lg shadow-orange-500/20">
+            {user?.name?.[0]?.toUpperCase()}
+          </div>
         ) : (
-          <div className="h-7 w-7 rounded-full bg-white/20 flex items-center justify-center text-sm font-semibold">
+          <div className="w-6 h-6 rounded-lg bg-linear-to-br from-orange-400 to-orange-500 flex items-center justify-center text-white font-medium text-sm shadow-lg shadow-orange-500/20">
             {initial}
           </div>
         )}

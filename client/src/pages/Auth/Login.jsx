@@ -1,12 +1,14 @@
-import { AlertCircle, Loader, User } from 'lucide-react';
+import { AlertCircle, CheckCircle, Loader, User } from 'lucide-react';
 import React, { useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { API_PATHS } from '../../utils/apiPaths';
 import { useAuth } from '../../context/AuthContext';
 import axiosInstance from '../../utils/axiosInstance';
+import usePageTitle from '../../components/PageTitle';
 
 const Login = () => {
   const { login } = useAuth();
+  usePageTitle('Login — QuiZone');
 
   const [formData, setFormData] = useState({ nickname: '' });
 
@@ -28,7 +30,6 @@ const Login = () => {
     e.preventDefault();
     const nickname = formData.nickname.trim();
 
-    // Sadə validation
     if (nickname.length < 3) {
       setFormState((p) => ({
         ...p,
@@ -42,27 +43,43 @@ const Login = () => {
       loading: true,
       errors: { ...p.errors, submit: '' },
     }));
+
     try {
       const { data } = await axiosInstance.post(API_PATHS.AUTH.GUEST, {
         nickname,
       });
-      // server { user, expires } verir
-      login(data); // token yoxdur
-      window.location.href = '/'; // istədiyin səhifə
+      login(data);
+
+      // ✅ success vəziyyəti göstər
+      setFormState((p) => ({
+        ...p,
+        loading: false,
+        success: true,
+      }));
+
+      // ✅ 2 saniyə sonra yönləndir
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
     } catch (error) {
       setFormState((p) => ({
         ...p,
+        loading: false,
         errors: {
           ...p.errors,
           submit: error?.response?.data?.message || 'Qonaq girişi alınmadı',
         },
       }));
-    } finally {
-      setFormState((p) => ({ ...p, loading: false }));
     }
   };
 
   const handleGoogleLogin = async () => {
+    setFormState((p) => ({
+      ...p,
+      loading: true,
+      errors: { ...p.errors, submit: '' },
+    }));
+
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -71,20 +88,46 @@ const Login = () => {
           queryParams: { access_type: 'offline', prompt: 'consent' },
         },
       });
+
       if (error) {
-        setFormState((prev) => ({
-          ...prev,
-          errors: { ...prev.errors, submit: error.message },
-        }));
+        throw new Error(error.message);
       }
+
+      // ✅ Success vəziyyəti
+      setFormState((p) => ({
+        ...p,
+        loading: false,
+        success: true,
+      }));
+
+      // ✅ 2 saniyə sonra yönləndir
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
     } catch (e) {
-      setFormState((prev) => ({
-        ...prev,
-        errors: { ...prev.errors, submit: e.message || 'Google login xətası' },
+      setFormState((p) => ({
+        ...p,
+        loading: false,
+        errors: { ...p.errors, submit: e.message || 'Google login xətası' },
       }));
     }
   };
 
+  if (formState.success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center  px-4">
+        <div className="bg-[#212121] p-8 rounded-xl shadow-lg max-w-md w-full text-center">
+          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">Daxil olunur!</h2>
+
+          <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto" />
+          <p className="text-sm text-white mt-2">
+            Ana səhifəyə yənləndirilir...
+          </p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-[calc(100vh-100px)] flex items-center justify-center px-4">
       <div className="bg-[#212121] p-8 rounded-xl shadow-lg max-w-md w-full">

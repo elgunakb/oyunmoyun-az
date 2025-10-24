@@ -20,7 +20,6 @@ export default function LanguageSelector({ onChange }) {
     if (typeof onChange === 'function') onChange(current);
   }, [current, onChange]);
 
-  // click outside to close
   useEffect(() => {
     function handleClick(e) {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false);
@@ -36,11 +35,11 @@ export default function LanguageSelector({ onChange }) {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white hover:bg-white/10 transition"
+        className="flex items-center text-sm gap-3 px-3.5 h-10 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-md border border-gray-500/50"
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <Globe size={18} className="opacity-90" />
+        <Globe size={20} className="opacity-90" />
         <span className="hidden sm:inline">{active.lang}</span>
         <span className="sm:hidden">{active.flag}</span>
         <ChevronDown

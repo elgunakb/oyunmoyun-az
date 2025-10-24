@@ -8,8 +8,8 @@ export default function ProtectedRoute({ requiredRole }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        Yüklənir...
+      <div className="min-h-screen flex items-center justify-center  px-4">
+        <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto" />
       </div>
     );
   }
