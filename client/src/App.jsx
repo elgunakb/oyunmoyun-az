@@ -24,15 +24,13 @@ const App = () => {
 
         <Router>
           <Routes>
-            {/* OAuth callback public qalır */}
             <Route path="/auth/callback" element={<AuthCallback />} />
 
-            {/* Login: yalnız qonaq görə bilsin */}
             <Route element={<GuestRoute />}>
               <Route path="/login" element={<Login />} />
             </Route>
 
-            {/* Qorumalı route-lar */}
+            {/* Login routers */}
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<LandingPage />} />
               <Route path="/profile" element={<MyProfile />} />

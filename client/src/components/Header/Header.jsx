@@ -28,7 +28,6 @@ export default function Header() {
             </div>
           </a>
 
-          {/* Sağ tərəf: nickname + dil seçimi */}
           <div className="justify-self-end md:col-start-3 relative z-50 overflow-visible">
             <div className="flex items-center gap-3">
               {/* Nickname / user info */}

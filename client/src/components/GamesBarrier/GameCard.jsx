@@ -2,10 +2,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import AccessibleButton from '../AccessibleButton/AccessibleButton';
 
-const GameCard = React.memo(function GameCard({ title, image, Icon }) {
+const GameCard = React.memo(function GameCard({ title, image, Icon, onClick }) {
   const IconCmp = Icon;
+
   return (
     <AccessibleButton
+      onClick={onClick}
       className="group/card relative w-full cursor-pointer select-none rounded-2xl border-2 border-gray-600/50 bg-gradient-to-br from-gray-800/50 to-gray-900/50 transition-transform duration-300 hover:scale-105 hover:border-gray-500 hover:shadow-2xl hover:shadow-gray-500/10 text-left"
       aria-label={`${title} oyununu aç`}
     >
@@ -39,7 +41,8 @@ const GameCard = React.memo(function GameCard({ title, image, Icon }) {
 GameCard.propTypes = {
   title: PropTypes.string.isRequired,
   image: PropTypes.string.isRequired,
-  Icon: PropTypes.elementType, // lucide icon component
+  Icon: PropTypes.elementType,
+  onClick: PropTypes.func, // MODAL açılışı üçün
 };
 
 export default GameCard;
