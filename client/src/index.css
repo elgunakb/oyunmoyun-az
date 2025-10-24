@@ -22,7 +22,7 @@
     background-position: center;
     background-color: #1e1e2f;
     overflow-x: hidden; */
-    background-color: #1d2242;
+    background-image: linear-gradient(to bottom, #1f2936, #111828);
     width: 100%;
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;

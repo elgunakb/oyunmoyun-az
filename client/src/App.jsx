@@ -14,6 +14,7 @@ import LandingPage from './pages/LandingPage/LandingPage';
 import { AuthProvider } from './context/AuthContext';
 import AuthCallback from './pages/Auth/AuthCallBack';
 import Header from './components/Header/Header';
+import Navbar from './components/Navbar/Navbar';
 
 const App = () => {
   return (

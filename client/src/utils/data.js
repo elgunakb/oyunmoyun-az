@@ -98,8 +98,22 @@ export const JOB_TYPES = [
   { value: 'Internship', label: 'Internship' },
 ];
 
-export const SALARY_RANGES = [
-  'Less than $1000',
-  '$1000 - $15,000',
-  'More than $15,000',
+import { Swords } from 'lucide-react';
+import adSeher from '../assets/919c5441527e6f5a16cd8e1904f3de49.png';
+
+export const GAME_SECTIONS = [
+  {
+    id: 'multiplayer',
+    title: 'Çox oyunçulu',
+    ctaText: 'Hamısı',
+    games: [
+      { id: 'ad-seher', title: 'Ad, şəhər', image: adSeher, icon: Swords },
+    ],
+  },
+  {
+    id: 'singleplayer',
+    title: 'Tək nəfərlik',
+    ctaText: 'Hamısı',
+    games: [{ id: 'x-o-x', title: 'X-O-X', image: adSeher, icon: Swords }],
+  },
 ];

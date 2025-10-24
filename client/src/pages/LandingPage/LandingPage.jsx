@@ -1,15 +1,38 @@
 import React, { useState } from 'react';
-import Header from '../../components/Header/Header';
+import { GAME_SECTIONS } from '../../utils/data';
 import usePageTitle from '../../components/PageTitle';
-import Navbar from '../../components/Navbar/Navbar';
+import AccordionSection from '../../components/AccordionSection/AccordionSection';
 
-const LandingPage = () => {
-  usePageTitle('QuiZone — ');
-  return (
-    <div className="min-h-screen bg-linear-to-b from-gray-800 to-gray-900 ">
-      <Navbar />
-    </div>
+function useAccordionState(initialOpenIds = []) {
+  const [openMap, setOpenMap] = useState(() =>
+    initialOpenIds.reduce((acc, k) => ((acc[k] = true), acc), {})
   );
-};
+  const toggle = (key) => setOpenMap((m) => ({ ...m, [key]: !m[key] }));
+  const isOpen = (key) => !!openMap[key];
+  return { isOpen, toggle };
+}
 
-export default LandingPage;
+export default function LandingPage() {
+  usePageTitle('QuiZone — ');
+
+  // accordion default
+  const { isOpen, toggle } = useAccordionState(['multiplayer', 'singleplayer']);
+
+  return (
+    <main className="min-h-screen px-4 py-4 relative">
+      {/*SEO  */}
+      <h1 className="sr-only">ad seher oyunu</h1>
+
+      <div className="relative mx-auto max-w-6xl text-white">
+        {GAME_SECTIONS.map((section) => (
+          <AccordionSection
+            key={section.id}
+            section={section}
+            open={isOpen(section.id)}
+            onToggle={() => toggle(section.id)}
+          />
+        ))}
+      </div>
+    </main>
+  );
+}
