@@ -11,11 +11,9 @@ export default function Modal({ open, onClose, titleId, children }) {
     const onKey = (e) => e.key === 'Escape' && onClose?.();
     document.addEventListener('keydown', onKey);
 
-    // body scroll lock (modal açıq olanda arxa plan hərəkət etməsin)
     const prevOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = 'hidden';
 
-    // fokus
     const prev = document.activeElement;
     dialogRef.current?.focus();
 
@@ -30,7 +28,7 @@ export default function Modal({ open, onClose, titleId, children }) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
+      className="fixed inset-0 z-100 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
       aria-labelledby={titleId}
       role="dialog"
       aria-modal="true"
@@ -38,7 +36,6 @@ export default function Modal({ open, onClose, titleId, children }) {
         if (e.target === e.currentTarget) onClose?.();
       }}
     >
-      {/* Container: mobilde tam eni istifadə et, max hündürlük = ekran - boşluqlar */}
       <div
         ref={dialogRef}
         tabIndex={-1}
@@ -50,10 +47,6 @@ export default function Modal({ open, onClose, titleId, children }) {
           max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)]
         "
       >
-        {/* className="  " */}
-
-        {/* Qeyd: uşaqlardan 1ci 'header', 2ci 'main/body', 3cü 'footer' gözləyirik */}
-        {/* header + body + footer gəlir */}
         {children}
       </div>
     </div>,
@@ -65,5 +58,5 @@ Modal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func,
   titleId: PropTypes.string,
-  children: PropTypes.node, // header + main + footer
+  children: PropTypes.node,
 };
