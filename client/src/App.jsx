@@ -14,7 +14,7 @@ import LandingPage from './pages/LandingPage/LandingPage';
 import { AuthProvider } from './context/AuthContext';
 import AuthCallback from './pages/Auth/AuthCallBack';
 import Header from './components/Header/Header';
-import Navbar from './components/Navbar/Navbar';
+import WaitingRoom from './pages/WaitingRoom/WaitingRoom';
 
 const App = () => {
   return (
@@ -34,6 +34,7 @@ const App = () => {
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<LandingPage />} />
               <Route path="/profile" element={<MyProfile />} />
+              <Route path="/waiting-room/:code" element={<WaitingRoom />} />
             </Route>
 
             {/* 404 */}

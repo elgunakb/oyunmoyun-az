@@ -1,8 +1,18 @@
-import React, { useCallback, useId, useMemo, useReducer } from 'react';
+import React, {
+  useCallback,
+  useId,
+  useMemo,
+  useReducer,
+  useState,
+} from 'react';
 import PropTypes from 'prop-types';
 import { Zap, X, Check, Hash, EyeOff, Eye } from 'lucide-react';
 import Modal from '../Modal/Modal';
 import AccessibleButton from '../AccessibleButton/AccessibleButton';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabaseClient.js';
+import { useAuth } from '../../context/AuthContext.jsx';
+
 import {
   GAME_AD_SEHER_OPTİONS,
   LETTERS_A_Z,
@@ -14,7 +24,6 @@ function setToggle(prev, value) {
   next.has(value) ? next.delete(value) : next.add(value);
   return next;
 }
-
 function ensureAtLeastOne(set, fallbackValue) {
   return set.size > 0 ? set : new Set([fallbackValue]);
 }
@@ -26,10 +35,7 @@ const initialState = {
   gameTime: 60,
   options: new Set(['ad']),
   letters: new Set(['A']),
-  errors: {
-    options: '',
-    letters: '',
-  },
+  errors: { options: '', letters: '' },
 };
 
 function reducer(state, action) {
@@ -67,17 +73,15 @@ function reducer(state, action) {
     case 'SELECT_ALL_LETTERS':
       return {
         ...state,
-        letters: new Set(LETTERS_AZ),
+        letters: new Set(LETTERS_A_Z),
         errors: { ...state.errors, letters: '' },
       };
-    case 'CLEAR_LETTERS': {
-      // boş qala bilər, amma create zamanı yoxlanacaq
+    case 'CLEAR_LETTERS':
       return {
         ...state,
         letters: new Set(),
         errors: { ...state.errors, letters: 'Ən azı 1 hərf seçməlisiniz.' },
       };
-    }
     case 'VALIDATE': {
       const errors = {
         options: state.options.size ? '' : 'Ən azı 1 opsiyon seçməlisiniz.',
@@ -86,7 +90,7 @@ function reducer(state, action) {
       return { ...state, errors };
     }
     case 'RESET':
-      return { ...initialState, gameTime: state.gameTime }; // vaxtı saxlayırıq
+      return { ...initialState, gameTime: state.gameTime };
     default:
       return state;
   }
@@ -107,7 +111,6 @@ function Section({ title, aside, children }) {
     </section>
   );
 }
-
 function FieldLabel({ htmlFor, children, hint }) {
   return (
     <label
@@ -119,7 +122,6 @@ function FieldLabel({ htmlFor, children, hint }) {
     </label>
   );
 }
-
 function PillOption({ active, children, onClick }) {
   return (
     <AccessibleButton
@@ -128,7 +130,7 @@ function PillOption({ active, children, onClick }) {
       className={[
         'px-3 py-2 rounded-full border text-xs font-semibold transition',
         active
-          ? 'bg-orange-500 text-black border-orange-500'
+          ? 'bg-orange-500 text-white border-orange-500'
           : 'bg-white/5 border-white/10 hover:bg-white/10',
       ].join(' ')}
     >
@@ -136,7 +138,6 @@ function PillOption({ active, children, onClick }) {
     </AccessibleButton>
   );
 }
-
 function LetterBtn({ active, children, onClick }) {
   return (
     <AccessibleButton
@@ -145,7 +146,7 @@ function LetterBtn({ active, children, onClick }) {
       className={[
         'h-9 min-w-9 px-0 rounded-lg border text-sm sm:text-base font-bold tracking-wide',
         active
-          ? 'bg-orange-500 text-black border-orange-500'
+          ? 'bg-orange-500 text-white border-orange-500'
           : 'bg-white/5 border-white/10 hover:bg-white/10',
       ].join(' ')}
     >
@@ -161,35 +162,72 @@ export default function GameDetailsModal({
   categories = [],
 }) {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [submitErr, setSubmitErr] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const titleId = useId();
+  const navigate = useNavigate();
+  const { user } = useAuth(); // { name, playerId, image, provider }
 
   const selectedCategories = useMemo(
     () => (categories.length ? categories : [game?.title].filter(Boolean)),
     [categories, game?.title]
   );
 
-  const canCreate = state.options.size >= 1 && state.letters.size >= 1;
+  const canCreate =
+    state.options.size >= 1 && state.letters.size >= 1 && state?.roomName;
 
   const handleSubmit = useCallback(
-    (e) => {
+    async (e) => {
       e.preventDefault();
+      setSubmitErr('');
       dispatch({ type: 'VALIDATE' });
       if (!canCreate) return;
 
-      const payload = {
-        gameId: game?.id ?? null,
-        gameTitle: game?.title ?? null,
-        roomName: state.roomName.trim() || null,
-        roomPassword: state.roomPassword.trim() || null,
-        options: Array.from(ensureAtLeastOne(state.options, 'ad')),
-        letters: Array.from(ensureAtLeastOne(state.letters, 'A')),
-        categories: selectedCategories,
-        gameTime: state.gameTime,
-      };
+      if (!user?.playerId) {
+        setSubmitErr('Giriş edilməyib. Zəhmət olmasa əvvəlcə daxil olun.');
+        return;
+      }
 
-      onClose?.(payload);
+      setSubmitting(true);
+      try {
+        const payload = {
+          roomName: state.roomName.trim() || '',
+          roomPassword: state.roomPassword.trim() || '',
+          options: Array.from(ensureAtLeastOne(state.options, 'ad')),
+          letters: Array.from(ensureAtLeastOne(state.letters, 'A')),
+          categories: selectedCategories,
+          gameTime: Number(state.gameTime),
+          host: {
+            playerId: user.playerId,
+            name: user.name,
+            avatar: user.image || '',
+          },
+        };
+
+        // Supabase Edge Function: create-room
+        const { data, error } = await supabase.functions.invoke('create-room', {
+          body: payload,
+        });
+
+        if (error) {
+          setSubmitErr(error.message || 'Otaq yaradılmadı.');
+          return;
+        }
+
+        // Uğurlu — waiting-room/:code
+        if (data?.redirectUrl) {
+          navigate(data.redirectUrl);
+        } else if (data?.room?.code) {
+          navigate(`/waiting-room/${data.room.code}`);
+        }
+        onClose?.(); // modal bağlansın
+      } catch (err) {
+        setSubmitErr(err?.message || 'Gözlənilməyən xəta baş verdi.');
+      } finally {
+        setSubmitting(false);
+      }
     },
-    [canCreate, game?.id, game?.title, onClose, selectedCategories, state]
+    [canCreate, navigate, onClose, selectedCategories, state, user]
   );
 
   return (
@@ -197,17 +235,16 @@ export default function GameDetailsModal({
       {/* Header */}
       <header className="flex items-center justify-between p-5 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-orange-500/90 flex items-center justify-center">
+          {/* <div className="w-9 h-9 rounded-xl bg-orange-500/90 flex items-center justify-center">
             <Zap className="w-5 h-5 text-black" />
-          </div>
+          </div> */}
           <div>
             <h3 id={titleId} className="text-lg font-extrabold tracking-tight">
-              Hızlı Otaq Yarat
+              Oyun Otağı Yarat
             </h3>
             <p className="text-base text-white/70 -mt-0.5">
               Otaq yaratdıqdan sonra URL-i dostunla bölüşə bilərsən
             </p>
-
             <div className="rounded-xl mt-2 flex flex-wrap gap-2">
               {selectedCategories.length ? (
                 selectedCategories.map((c) => (
@@ -215,7 +252,7 @@ export default function GameDetailsModal({
                     key={c}
                     className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-orange-500/90 text-white text-xs font-semibold"
                   >
-                    <Check className="w-3.5 h-3.5" />
+                    <Check className="w-3.5 h-3.5 text-green-600" />
                     {c}
                   </span>
                 ))
@@ -231,7 +268,7 @@ export default function GameDetailsModal({
         <AccessibleButton
           onClick={() => onClose?.()}
           aria-label="Modaldan çıx"
-          className="rounded-xl p-2 bg-orange-500 hover:bg-orange-400 text-black"
+          className="rounded-xl p-2 bg-orange-500 hover:bg-orange-400 text-white"
         >
           <X className="w-5 h-5" />
         </AccessibleButton>
@@ -244,7 +281,7 @@ export default function GameDetailsModal({
       >
         {/* Otaq adı */}
         <Section>
-          <FieldLabel htmlFor="roomName" hint="(opsional)">
+          <FieldLabel htmlFor="roomName" hint="(mütləq)">
             Otaq adı
           </FieldLabel>
           <div className="relative">
@@ -316,14 +353,10 @@ export default function GameDetailsModal({
         </Section>
 
         {/* Opsiyonlar */}
-        <Section
-          title="Opsiyonlar"
-          aside={
-            <div className="text-xs text-white/60">
-              Minimum <span className="font-bold">1</span> seçim
-            </div>
-          }
-        >
+        <Section>
+          <FieldLabel htmlFor="roomName" hint="(minimum 1 seçim)">
+            Opsiyonlar
+          </FieldLabel>
           <div className="flex flex-wrap gap-2">
             {GAME_AD_SEHER_OPTİONS.map((o) => (
               <PillOption
@@ -337,7 +370,6 @@ export default function GameDetailsModal({
               </PillOption>
             ))}
           </div>
-
           <div aria-live="polite" className="min-h-4">
             {state.errors.options && (
               <p className="text-xs text-red-400">{state.errors.options}</p>
@@ -355,7 +387,7 @@ export default function GameDetailsModal({
                 onClick={() => dispatch({ type: 'SELECT_ALL_LETTERS' })}
                 className="px-3 py-1.5 rounded-lg text-xs bg-white/10 hover:bg-white/15 border border-white/10"
               >
-                Hamısı seç
+                Hamısını seç
               </AccessibleButton>
               <AccessibleButton
                 type="button"
@@ -378,7 +410,6 @@ export default function GameDetailsModal({
               </LetterBtn>
             ))}
           </div>
-
           <div aria-live="polite" className="min-h-4">
             {state.errors.letters && (
               <p className="text-xs text-red-400">{state.errors.letters}</p>
@@ -386,24 +417,27 @@ export default function GameDetailsModal({
           </div>
         </Section>
 
-        {/* Footer (submit) */}
+        {/* Footer */}
         <div className="pt-2 border-t border-white/10">
+          {submitErr && (
+            <p className="mb-2 text-xs text-red-400">{submitErr}</p>
+          )}
           <AccessibleButton
             type="submit"
-            aria-disabled={!canCreate}
-            disabled={!canCreate}
+            aria-disabled={!canCreate || submitting}
+            disabled={!canCreate || submitting}
             title={
               !canCreate ? 'Ən azı 1 opsiyon və 1 hərf seçin' : 'Otaq yarat'
             }
             className={[
               'w-full mt-5 px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2',
-              canCreate
+              canCreate && !submitting
                 ? 'bg-orange-500 hover:bg-orange-400 text-white'
                 : 'bg-white/10 text-white/50 cursor-not-allowed',
             ].join(' ')}
           >
             <Zap className="w-5 h-5" />
-            Otaq Yarat
+            {submitting ? 'Yaradılır...' : 'Otaq Yarat'}
           </AccessibleButton>
         </div>
       </form>

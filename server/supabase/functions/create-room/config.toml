@@ -1,0 +1,3 @@
+[function]
+runtime = "nodejs18"
+entrypoint = "index.js"

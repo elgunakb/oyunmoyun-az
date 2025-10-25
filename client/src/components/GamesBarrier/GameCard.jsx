@@ -42,7 +42,7 @@ GameCard.propTypes = {
   title: PropTypes.string.isRequired,
   image: PropTypes.string.isRequired,
   Icon: PropTypes.elementType,
-  onClick: PropTypes.func, // MODAL açılışı üçün
+  onClick: PropTypes.func,
 };
 
 export default GameCard;

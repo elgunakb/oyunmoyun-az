@@ -15,7 +15,7 @@ export default function Modal({ open, onClose, titleId, children }) {
     document.documentElement.style.overflow = 'hidden';
 
     const prev = document.activeElement;
-    dialogRef.current?.focus();
+    // dialogRef.current?.focus();
 
     return () => {
       document.removeEventListener('keydown', onKey);
@@ -40,9 +40,9 @@ export default function Modal({ open, onClose, titleId, children }) {
         ref={dialogRef}
         tabIndex={-1}
         className="
-          w-full max-w-lg sm:max-w-xl md:max-w-2xl  dark:bg-gray-800 
-          rounded-2xl border border-white/10 bg-white
-          bg-gradient-to-b text-white shadow-2xl outline-none
+          w-full max-w-lg sm:max-w-xl md:max-w-2xl  bg-[#0c161e] 
+          rounded-2xl border border-white/10 
+          bg-linear-to-b text-white shadow-2xl outline-none
           grid grid-rows-[auto_1fr_auto]
           max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)]
         "
