@@ -12,7 +12,9 @@ export function useRoom(code) {
     (async () => {
       const { data, error } = await supabase
         .from('rooms')
-        .select('id,status,host_player_id,name,game_time,is_password_protected')
+        .select(
+          'id, code, status, host_player_id, name, options, letters, categories, game_time, is_password_protected'
+        )
         .eq('code', code)
         .single();
 

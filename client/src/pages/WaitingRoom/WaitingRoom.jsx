@@ -87,7 +87,7 @@ export default function WaitingRoom() {
     <main className="max-w-4xl mx-auto w-full mt-8">
       <section className="bg-[#0c161e] rounded-xl shadow-md p-6 text-center mb-4">
         <WaitingHeader code={code} room={room} />
-        <RoomMeta />
+        <RoomMeta room={room} />
         <div className="p-3 rounded-lg mb-6 max-w-lg mx-auto">
           <CopyToClipboard textToCopy={roomLink} />
         </div>

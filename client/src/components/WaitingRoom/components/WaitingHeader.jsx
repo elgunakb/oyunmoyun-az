@@ -6,7 +6,7 @@ export default function WaitingHeader({ code, room }) {
   return (
     <header className="bg-[#0c161e] backdrop-blur-sm rounded-xl shadow-md p-6 text-center mb-4">
       <h1 className="text-2xl font-bold text-orange-600 mb-3">
-        Otaq: {code}
+        Otaq adı: {room?.name}
         <span className="inline-flex items-center px-2 py-1 ml-3 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200">
           {badge}
         </span>

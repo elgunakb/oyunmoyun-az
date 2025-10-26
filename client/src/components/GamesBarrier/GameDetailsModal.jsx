@@ -287,6 +287,7 @@ export default function GameDetailsModal({
           <div className="relative">
             <input
               id="roomName"
+              autoComplete="room-name"
               type="text"
               value={state.roomName}
               onChange={(e) =>
@@ -307,6 +308,7 @@ export default function GameDetailsModal({
           <div className="relative">
             <input
               id="roomPassword"
+              autoComplete="new-password"
               type={state.showPass ? 'text' : 'password'}
               value={state.roomPassword}
               onChange={(e) =>
