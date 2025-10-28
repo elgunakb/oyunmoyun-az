@@ -1,5 +1,11 @@
 // client/src/pages/GameStat/GameStat.jsx
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+} from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import socket from '../../lib/socket';
 
@@ -9,13 +15,21 @@ export default function GameStat() {
   const { state } = useLocation();
 
   const me = state?.nickname ?? 'Anon';
+  const isHost = !!state?.isHost;
 
   const [players, setPlayers] = useState([]);
   const [answers, setAnswers] = useState({});
   const [votes, setVotes] = useState({});
   const [scores, setScores] = useState({});
-  const [myChoice, setMyChoice] = useState({}); // {'target::cat': 'positive'|'negative'}
+  const [myChoice, setMyChoice] = useState({});
 
+  // 🔒 Son cavabları listener-larda istifadə etmək üçün ref
+  const answersRef = useRef({});
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+
+  // ✅ 1) Yalnız MOUNT-da join + state:sync (sonsuz loopu kəsir)
   useEffect(() => {
     socket.emit('room:join', {
       code: roomId,
@@ -24,12 +38,23 @@ export default function GameStat() {
     });
     socket.emit('state:sync', { roomId });
 
+    // cleanup: leave optional
+    return () => {
+      // istəsən burda room:leave də göndərə bilərsən
+      // socket.emit('room:leave', { roomId, code: roomId, playerId: state?.playerId ?? 'anon' });
+    };
+    // ⚠️ yalnız bu 3-ü: roomId, me, playerId (answers, votes və s. qoyma!)
+  }, [roomId, me, state?.playerId]);
+
+  // ✅ 2) Listener-lar (answersRef ilə işləyir, dependency-ləri minimal saxla)
+  useEffect(() => {
     const onInitial = (arr) => {
       const payload = Array.isArray(arr) ? arr[1] : arr;
       setPlayers(payload.players || []);
       setAnswers(payload.answers || {});
       setVotes(payload.votes || {});
     };
+
     const onRoomUpdate = (payload) => {
       if (Array.isArray(payload)) return;
       const list = payload?.connectedPlayers?.length
@@ -37,6 +62,7 @@ export default function GameStat() {
         : payload?.players || [];
       if (list?.length) setPlayers(list);
     };
+
     const onUpdateVotes = (arr) => {
       const payload = Array.isArray(arr) ? arr[1] : arr;
       setVotes((prev) => {
@@ -46,20 +72,67 @@ export default function GameStat() {
         return copy;
       });
     };
+
     const onDone = ({ scores }) => setScores(scores || {});
+
+    // 🔔 Yeni raund başladı → hamı GameRoom-a yönlənsin
+    const onStarted = (payload) => {
+      const duration =
+        typeof payload?.duration === 'number' ? payload.duration : 60;
+      const letter = payload?.letter ?? null;
+
+      // 1) server payload.categories varsa onu istifadə et
+      let options = Array.isArray(payload?.categories)
+        ? payload.categories
+        : null;
+
+      // 2) yoxdursa, son cavablardan çıxart
+      if (!options) {
+        const set = new Set();
+        Object.values(answersRef.current).forEach((m) =>
+          Object.keys(m || {}).forEach((c) => set.add(c))
+        );
+        options = Array.from(set);
+      }
+
+      navigate(`/game/${roomId}`, {
+        state: {
+          code: roomId,
+          letter,
+          duration,
+          options,
+          playerId: state?.playerId,
+          nickname: me,
+          isHost,
+        },
+        replace: true,
+      });
+    };
+
+    // 🔔 Hərflər bitdi → hamı WaitingRoom-a
+    const onOver = () => {
+      navigate(`/waiting-room/${roomId}`, { replace: true });
+    };
 
     socket.on('initialData', onInitial);
     socket.on('room:update', onRoomUpdate);
     socket.on('updateVotes', onUpdateVotes);
     socket.on('review:done', onDone);
+    socket.on('game:started', onStarted);
+    socket.on('game:over', onOver);
 
     return () => {
       socket.off('initialData', onInitial);
       socket.off('room:update', onRoomUpdate);
       socket.off('updateVotes', onUpdateVotes);
       socket.off('review:done', onDone);
+      socket.off('game:started', onStarted);
+      socket.off('game:over', onOver);
     };
-  }, [roomId, me, state?.playerId]);
+    // ⚠️ Burada da answers-u dependency etmə; answersRef kifayətdir
+  }, [navigate, roomId, me, isHost, state?.playerId]);
+
+  // === Qalan kod eyni qalır (cast, finishReview, nextRound, UI) ===
 
   const allCategories = useMemo(() => {
     const set = new Set();
@@ -72,7 +145,6 @@ export default function GameStat() {
   const cast = useCallback(
     (target, category, voteType) => {
       const key = `${target}::${category}`;
-      // UI səviyyəsində eyni düyməyə ikinci dəfə allow etməyək
       if (myChoice[key] === voteType) return;
 
       socket.emit('castVote', {
@@ -80,7 +152,7 @@ export default function GameStat() {
         voter: me,
         target,
         category,
-        voteType, // 'positive' | 'negative'
+        voteType,
       });
 
       setMyChoice((prev) => ({ ...prev, [key]: voteType }));
@@ -93,9 +165,9 @@ export default function GameStat() {
   }, [roomId]);
 
   const nextRound = useCallback(() => {
+    if (!isHost) return;
     socket.emit('round:next', { roomId });
-    navigate(`/waiting-room/${roomId}`, { replace: true });
-  }, [navigate, roomId]);
+  }, [roomId, isHost]);
 
   return (
     <main className="p-6 max-w-4xl mx-auto text-white space-y-6">
@@ -110,7 +182,13 @@ export default function GameStat() {
           </button>
           <button
             onClick={nextRound}
-            className="px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-700"
+            disabled={!isHost}
+            className={`px-3 py-2 rounded ${
+              isHost
+                ? 'bg-indigo-600 hover:bg-indigo-700'
+                : 'bg-indigo-900/40 cursor-not-allowed'
+            }`}
+            title={isHost ? 'Növbəti tur' : 'Yalnız host keçə bilər'}
           >
             Növbəti tur
           </button>
@@ -126,11 +204,8 @@ export default function GameStat() {
                 const text = (answers?.[name]?.[cat] || '').trim();
                 const v = votes?.[name]?.[cat] || { positive: 0, negative: 0 };
                 const key = `${name}::${cat}`;
-                const choice = myChoice[key]; // 'positive' | 'negative' | undefined
-
-                // Boş cavab — hər iki düymə deaktiv
+                const choice = myChoice[key];
                 const isBlank = text.length === 0;
-
                 const disablePos = isBlank || choice === 'positive';
                 const disableNeg = isBlank || choice === 'negative';
 

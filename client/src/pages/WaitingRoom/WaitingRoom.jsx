@@ -155,6 +155,7 @@ export default function WaitingRoom() {
           players,
           playerId: user.playerId,
           nickname: user.name,
+          isHost,
         },
         replace: true,
       });

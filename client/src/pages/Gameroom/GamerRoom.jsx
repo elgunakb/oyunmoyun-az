@@ -70,6 +70,7 @@ export default function GameRoom() {
             roomId,
             nickname: state?.nickname,
             playerId: state?.playerId,
+            isHost: state?.isHost,
           },
           replace: true,
         });
