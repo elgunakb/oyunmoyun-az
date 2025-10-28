@@ -1,8 +1,6 @@
 import React from 'react';
 
 export default function RoomMeta({ room }) {
-  console.log(room);
-
   return (
     <section className="bg-[#0c161e] p-4 rounded-lg mb-4 max-w-lg mx-auto border border-gray-800 shadow-sm">
       <div className="grid grid-cols-2 gap-3 text-sm">

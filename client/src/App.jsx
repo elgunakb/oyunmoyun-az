@@ -15,6 +15,8 @@ import { AuthProvider } from './context/AuthContext';
 import AuthCallback from './pages/Auth/AuthCallBack';
 import Header from './components/Header/Header';
 import WaitingRoom from './pages/WaitingRoom/WaitingRoom';
+import GameRoom from './pages/Gameroom/GamerRoom';
+import GameStat from './pages/GameStat/GameStat';
 
 const App = () => {
   return (
@@ -35,6 +37,8 @@ const App = () => {
               <Route path="/" element={<LandingPage />} />
               <Route path="/profile" element={<MyProfile />} />
               <Route path="/waiting-room/:code" element={<WaitingRoom />} />
+              <Route path="/game/:code" element={<GameRoom />} />
+              <Route path="/game-stat/:code" element={<GameStat />} />
             </Route>
 
             {/* 404 */}

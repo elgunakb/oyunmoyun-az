@@ -12,12 +12,12 @@ import AccessibleButton from '../AccessibleButton/AccessibleButton';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient.js';
 import { useAuth } from '../../context/AuthContext.jsx';
-
 import {
   GAME_AD_SEHER_OPTİONS,
   LETTERS_A_Z,
   GAME_TIMES,
 } from '../../utils/Options.js';
+import socket from '../../lib/socket.js';
 
 function setToggle(prev, value) {
   const next = new Set(prev);
