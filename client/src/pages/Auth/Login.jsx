@@ -5,8 +5,11 @@ import { API_PATHS } from '../../utils/apiPaths';
 import { useAuth } from '../../context/AuthContext';
 import axiosInstance from '../../utils/axiosInstance';
 import usePageTitle from '../../components/PageTitle';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const Login = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const { login } = useAuth();
   usePageTitle('Login — QuiZone');
 
@@ -17,7 +20,7 @@ const Login = () => {
     errors: {},
     success: false,
   });
-
+  const redirectTo = location.state?.from?.pathname || '/';
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -50,7 +53,6 @@ const Login = () => {
       });
       login(data);
 
-      // ✅ success vəziyyəti göstər
       setFormState((p) => ({
         ...p,
         loading: false,
@@ -59,7 +61,7 @@ const Login = () => {
 
       // ✅ 2 saniyə sonra yönləndir
       setTimeout(() => {
-        window.location.href = '/';
+        navigate(redirectTo, { replace: true });
       }, 2000);
     } catch (error) {
       setFormState((p) => ({
@@ -102,7 +104,7 @@ const Login = () => {
 
       // ✅ 2 saniyə sonra yönləndir
       setTimeout(() => {
-        window.location.href = '/';
+        navigate(redirectTo, { replace: true });
       }, 2000);
     } catch (e) {
       setFormState((p) => ({
