@@ -267,14 +267,27 @@ function finalizeReview(io, room) {
 }
 
 function nextRound(io, room) {
-  if (room.meta.stage === 'over') return;
-  const all = safeArray(room.meta.letters);
-  if (room.meta.usedLetters && room.meta.usedLetters.size >= all.length) {
-    room.meta.stage = 'over';
-    io.to(room.id).emit(EVENTS.OVER, { reason: 'letters_exhausted' });
-    emitRoom(io, room);
+  // "over"dan sonra host təkrar NEXT basarsa — sadəcə reset saxla
+  if (room.meta.stage === 'over') {
+    resetGame(room);
+    emitRoom(io, room); // waiting vəziyyətini yayınla
     return;
   }
+
+  const all = safeArray(room.meta.letters);
+  const usedCount = room.meta.usedLetters ? room.meta.usedLetters.size : 0;
+
+  if (all.length && usedCount >= all.length) {
+    // bütün hərflər oynanıb
+    io.to(room.id).emit(EVENTS.OVER, { reason: 'letters_exhausted' });
+
+    // dərhal sıfırla ki, növbəti oyunda hərflər yenidən oynansın
+    resetGame(room);
+    emitRoom(io, room); // stage=waiting, currentRound=0, roundScores=[], selectedLetter=null
+    return;
+  }
+
+  // hələ hərflər qalıb — növbəti raund
   startRound(io, room, room.meta.timer || 60);
 }
 
@@ -464,6 +477,33 @@ function parseAllowedOrigins() {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+function resetGame(room) {
+  // stage & raundlar
+  room.meta.stage = 'waiting';
+  room.meta.currentRound = 0;
+  room.meta.selectedLetter = null;
+
+  // bütün round xallarını sil
+  room.meta.roundScores = [];
+
+  // istifadə olunmuş hərfləri sıfırla (yenidən hamısı oynana bilsin)
+  room.meta.usedLetters = new Set();
+
+  // cavablar/səslər/timer sıfırlansın
+  room.state.answers = new Map();
+  room.state.votes = {};
+  room.state.rawAnswers = {};
+  if (room.state.timer?.interval) {
+    clearInterval(room.state.timer.interval);
+  }
+  room.state.timer = null;
+
+  // oyunçu flag-ları
+  for (const p of room.players.values()) {
+    p.submitted = false;
+  }
 }
 
 // --- Socket.IO factory ---

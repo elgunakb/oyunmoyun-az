@@ -18,18 +18,20 @@ export default function GameStat() {
   const isHost = !!state?.isHost;
 
   const [players, setPlayers] = useState([]);
-  const [answers, setAnswers] = useState({});
-  const [votes, setVotes] = useState({});
-  const [scores, setScores] = useState({});
-  const [myChoice, setMyChoice] = useState({});
+  const [answers, setAnswers] = useState({}); // {name:{cat:text}}
+  const [votes, setVotes] = useState({}); // {name:{cat:{positive,negative}}}
+  const [scores, setScores] = useState({}); // cari raundun xalları
+  const [roundHistory, setRoundHistory] = useState([]); // [{round, scores, _id}]
+  const [myChoice, setMyChoice] = useState({}); // {'target::cat': 'positive'|'negative'}
+  const [showTotals, setShowTotals] = useState(false);
 
-  // 🔒 Son cavabları listener-larda istifadə etmək üçün ref
+  // answersRef – listeners üçün
   const answersRef = useRef({});
   useEffect(() => {
     answersRef.current = answers;
   }, [answers]);
 
-  // ✅ 1) Yalnız MOUNT-da join + state:sync (sonsuz loopu kəsir)
+  // ❶ MOUNT-da: join + sync
   useEffect(() => {
     socket.emit('room:join', {
       code: roomId,
@@ -37,16 +39,10 @@ export default function GameStat() {
       player: { playerId: state?.playerId ?? 'anon', name: me },
     });
     socket.emit('state:sync', { roomId });
-
-    // cleanup: leave optional
-    return () => {
-      // istəsən burda room:leave də göndərə bilərsən
-      // socket.emit('room:leave', { roomId, code: roomId, playerId: state?.playerId ?? 'anon' });
-    };
-    // ⚠️ yalnız bu 3-ü: roomId, me, playerId (answers, votes və s. qoyma!)
+    return () => {};
   }, [roomId, me, state?.playerId]);
 
-  // ✅ 2) Listener-lar (answersRef ilə işləyir, dependency-ləri minimal saxla)
+  // ❷ Listener-lar
   useEffect(() => {
     const onInitial = (arr) => {
       const payload = Array.isArray(arr) ? arr[1] : arr;
@@ -61,6 +57,11 @@ export default function GameStat() {
         ? payload.connectedPlayers
         : payload?.players || [];
       if (list?.length) setPlayers(list);
+
+      // server roundScores-u göndərirsə tarixçəni saxla
+      if (Array.isArray(payload?.roundScores)) {
+        setRoundHistory(payload.roundScores);
+      }
     };
 
     const onUpdateVotes = (arr) => {
@@ -73,20 +74,26 @@ export default function GameStat() {
       });
     };
 
-    const onDone = ({ scores }) => setScores(scores || {});
+    // cari raund bitəndə — round tarixinə əlavə et (server göndərirsə)
+    const onDone = ({ scores, round }) => {
+      setScores(scores || {});
+      setRoundHistory((prev) => {
+        // eyni round təkrar gəlməsin
+        const next = [...prev];
+        if (!next.some((r) => r.round === round)) {
+          next.push({ round, scores });
+        }
+        return next;
+      });
+    };
 
-    // 🔔 Yeni raund başladı → hamı GameRoom-a yönlənsin
     const onStarted = (payload) => {
       const duration =
         typeof payload?.duration === 'number' ? payload.duration : 60;
       const letter = payload?.letter ?? null;
-
-      // 1) server payload.categories varsa onu istifadə et
       let options = Array.isArray(payload?.categories)
         ? payload.categories
         : null;
-
-      // 2) yoxdursa, son cavablardan çıxart
       if (!options) {
         const set = new Set();
         Object.values(answersRef.current).forEach((m) =>
@@ -94,7 +101,6 @@ export default function GameStat() {
         );
         options = Array.from(set);
       }
-
       navigate(`/game/${roomId}`, {
         state: {
           code: roomId,
@@ -109,10 +115,7 @@ export default function GameStat() {
       });
     };
 
-    // 🔔 Hərflər bitdi → hamı WaitingRoom-a
-    const onOver = () => {
-      navigate(`/waiting-room/${roomId}`, { replace: true });
-    };
+    const onOver = () => navigate(`/waiting-room/${roomId}`, { replace: true });
 
     socket.on('initialData', onInitial);
     socket.on('room:update', onRoomUpdate);
@@ -129,11 +132,9 @@ export default function GameStat() {
       socket.off('game:started', onStarted);
       socket.off('game:over', onOver);
     };
-    // ⚠️ Burada da answers-u dependency etmə; answersRef kifayətdir
   }, [navigate, roomId, me, isHost, state?.playerId]);
 
-  // === Qalan kod eyni qalır (cast, finishReview, nextRound, UI) ===
-
+  // Bütün kateqoriyalar
   const allCategories = useMemo(() => {
     const set = new Set();
     Object.values(answers).forEach((m) =>
@@ -142,11 +143,45 @@ export default function GameStat() {
     return Array.from(set);
   }, [answers]);
 
+  // ❸ Review tamamdırmı? (bütün boş olmayan cavablar üçün səs sayı = oyunçu sayı)
+  const reviewComplete = useMemo(() => {
+    const votersRequired = players.length;
+    if (votersRequired === 0) return false;
+
+    for (const playerName of players) {
+      const a = answers?.[playerName] || {};
+      for (const cat of allCategories) {
+        const txt = (a?.[cat] || '').trim();
+        if (!txt) continue; // boş cavablar sayılır (disabled, auto-negativ ola bilər)
+        const v = votes?.[playerName]?.[cat] || { positive: 0, negative: 0 };
+        const total = (v.positive || 0) + (v.negative || 0);
+        if (total < votersRequired) return false;
+      }
+    }
+    return true;
+  }, [players, answers, votes, allCategories]);
+
+  // ❹ Bütün raundların CƏMİ
+  const totals = useMemo(() => {
+    const out = {};
+    // tarixçədən
+    for (const r of roundHistory) {
+      const sc = r?.scores || {};
+      for (const [name, val] of Object.entries(sc)) {
+        out[name] = (out[name] || 0) + (val || 0);
+      }
+    }
+    // ehtiyat: cari raund (tarixçəyə düşməyibsə)
+    for (const [name, val] of Object.entries(scores || {})) {
+      out[name] = (out[name] || 0) + (val || 0);
+    }
+    return out;
+  }, [roundHistory, scores]);
+
   const cast = useCallback(
     (target, category, voteType) => {
       const key = `${target}::${category}`;
       if (myChoice[key] === voteType) return;
-
       socket.emit('castVote', {
         roomId,
         voter: me,
@@ -154,18 +189,21 @@ export default function GameStat() {
         category,
         voteType,
       });
-
       setMyChoice((prev) => ({ ...prev, [key]: voteType }));
     },
     [roomId, me, myChoice]
   );
 
+  // ❺ Review-u bitir — yalnız host və reviewComplete olduqda aktiv.
   const finishReview = useCallback(() => {
+    if (!isHost || !reviewComplete) return;
     socket.emit('review:finish', { roomId });
-  }, [roomId]);
+    setShowTotals(true); // cəmləri göstər
+  }, [roomId, isHost, reviewComplete]);
 
   const nextRound = useCallback(() => {
     if (!isHost) return;
+    setShowTotals(false);
     socket.emit('round:next', { roomId });
   }, [roomId, isHost]);
 
@@ -176,10 +214,23 @@ export default function GameStat() {
         <div className="flex gap-2">
           <button
             onClick={finishReview}
-            className="px-3 py-2 rounded bg-emerald-600 hover:bg-emerald-700"
+            disabled={!isHost || !reviewComplete}
+            className={`px-3 py-2 rounded ${
+              !isHost || !reviewComplete
+                ? 'bg-emerald-900/40 cursor-not-allowed'
+                : 'bg-emerald-600 hover:bg-emerald-700'
+            }`}
+            title={
+              !isHost
+                ? 'Yalnız host bitirə bilər'
+                : !reviewComplete
+                ? 'Hamı bütün cavablara səs verməyib'
+                : 'Review-u bitir'
+            }
           >
             Review-u bitir
           </button>
+
           <button
             onClick={nextRound}
             disabled={!isHost}
@@ -195,6 +246,7 @@ export default function GameStat() {
         </div>
       </header>
 
+      {/* SƏSVERMƏ BLOKU */}
       <section className="space-y-4">
         {players.map((name) => (
           <div key={name} className="bg-white/5 rounded-lg p-4">
@@ -247,20 +299,27 @@ export default function GameStat() {
         ))}
       </section>
 
-      {Object.keys(scores).length > 0 && (
+      {/* CƏMLƏR – yalnız Review bitəndən sonra görünür */}
+      {showTotals && Object.keys(totals).length > 0 && (
         <section className="bg-white/5 rounded-lg p-4">
-          <h2 className="font-semibold mb-2">Xallar</h2>
+          <h2 className="font-semibold mb-2">Ümumi xallar (bütün raundlar)</h2>
           <ul className="grid md:grid-cols-2 gap-2">
-            {Object.entries(scores).map(([n, s]) => (
-              <li
-                key={n}
-                className="flex items-center justify-between bg-black/30 rounded px-3 py-2 border border-white/10"
-              >
-                <span className="font-semibold">{n}</span>
-                <span className="text-emerald-300 font-bold">{s}</span>
-              </li>
-            ))}
+            {Object.entries(totals)
+              .sort((a, b) => b[1] - a[1])
+              .map(([n, s]) => (
+                <li
+                  key={n}
+                  className="flex items-center justify-between bg-black/30 rounded px-3 py-2 border border-white/10"
+                >
+                  <span className="font-semibold">{n}</span>
+                  <span className="text-emerald-300 font-bold">{s}</span>
+                </li>
+              ))}
           </ul>
+          <p className="text-white/60 text-sm mt-2">
+            Qeyd: Bu cədvəl oynanmış bütün raundların cəmini göstərir. “Növbəti
+            tur” ilə oyuna davam edə bilərsiniz.
+          </p>
         </section>
       )}
     </main>
