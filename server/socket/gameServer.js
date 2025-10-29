@@ -177,6 +177,8 @@ function submitAnswers(io, room, playerId, answers) {
 
 function castVote(io, room, voterName, targetName, category, voteType) {
   if (room.meta.stage !== 'review') return;
+  // 🔒 Review kilidliykən səs qəbul etmə
+  if (room.state?.votingLocked) return;
   if (!['positive', 'negative'].includes(voteType)) return;
 
   // Boş cavablar üçün səs qəbul etmə
@@ -258,11 +260,20 @@ function finalizeReview(io, room) {
     _id: cryptoRandomId(),
   });
 
+  // 🔒 bu raund üçün səsverməni bağla
+  room.state.votingLocked = true;
+
+  // Hamıya: nəticələr + kilid + round tarixçəsi
   io.to(room.id).emit(EVENTS.REVIEW_DONE, {
     round: room.meta.currentRound,
     scores,
+    locked: true,
+    roundScores: room.meta.roundScores,
   });
-  room.meta.stage = 'waiting';
+
+  // Stage 'review' qalsın, host "Next round" edəcək.
+  // İstəsən 'waiting' saxlaya bilərsən, amma clientdə məntiq artıq işləyir.
+  room.meta.stage = 'review';
   emitRoom(io, room);
 }
 

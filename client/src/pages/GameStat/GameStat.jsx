@@ -25,7 +25,7 @@ export default function GameStat() {
   const [roundHistory, setRoundHistory] = useState([]); // [{round, scores, _id}]
   const [myChoice, setMyChoice] = useState({}); // {'target::cat': 'positive'|'negative'}
   const [showTotals, setShowTotals] = useState(false);
-
+  const [votingLocked, setVotingLocked] = useState(false);
   // answersRef – listeners üçün
   const answersRef = useRef({});
   useEffect(() => {
@@ -76,8 +76,9 @@ export default function GameStat() {
     };
 
     // cari raund bitəndə — round tarixinə əlavə et (server göndərirsə)
-    const onDone = ({ scores, round }) => {
+    const onDone = ({ scores, round, locked, roundScores }) => {
       setScores(scores || {});
+      if (Array.isArray(roundScores)) setRoundHistory(roundScores);
       setRoundHistory((prev) => {
         // eyni round təkrar gəlməsin
         const next = [...prev];
@@ -86,6 +87,10 @@ export default function GameStat() {
         }
         return next;
       });
+      if (locked) {
+        setVotingLocked(true);
+        setShowTotals(true);
+      }
     };
 
     const onStarted = (payload) => {
@@ -181,6 +186,7 @@ export default function GameStat() {
 
   const cast = useCallback(
     (target, category, voteType) => {
+      if (votingLocked) return;
       const key = `${target}::${category}`;
       if (myChoice[key] === voteType) return;
       socket.emit('castVote', {
@@ -192,7 +198,7 @@ export default function GameStat() {
       });
       setMyChoice((prev) => ({ ...prev, [key]: voteType }));
     },
-    [roomId, me, myChoice]
+    [roomId, me, myChoice, votingLocked]
   );
 
   // ❺ Review-u bitir — yalnız host və reviewComplete olduqda aktiv.
@@ -270,7 +276,8 @@ export default function GameStat() {
                 const isBlank = text.length === 0;
                 const disablePos = isBlank || choice === 'positive';
                 const disableNeg = isBlank || choice === 'negative';
-
+                const gDisablePos = votingLocked || disablePos;
+                const gDisableNeg = votingLocked || disableNeg;
                 return (
                   <div key={name} className="p-4 flex items-center gap-3">
                     {/* Oyunçu adı */}
@@ -285,8 +292,8 @@ export default function GameStat() {
                     <div className="flex items-center gap-2">
                       <VoteButtons
                         v={v}
-                        disablePos={disablePos}
-                        disableNeg={disableNeg}
+                        disablePos={gDisablePos}
+                        disableNeg={gDisableNeg}
                         cast={cast}
                         name={name}
                         cat={cat}
