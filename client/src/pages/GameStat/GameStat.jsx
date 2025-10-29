@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import socket from '../../lib/socket';
+import VoteButtons from '../../components/VoteButtons/VoteButtons';
 
 export default function GameStat() {
   const { code: roomId } = useParams();
@@ -225,10 +226,10 @@ export default function GameStat() {
                 ? 'Yalnız host bitirə bilər'
                 : !reviewComplete
                 ? 'Hamı bütün cavablara səs verməyib'
-                : 'Review-u bitir'
+                : 'Xalları göstər'
             }
           >
-            Review-u bitir
+            Xalları göstər
           </button>
 
           <button
@@ -247,12 +248,21 @@ export default function GameStat() {
       </header>
 
       {/* SƏSVERMƏ BLOKU */}
-      <section className="space-y-4">
-        {players.map((name) => (
-          <div key={name} className="bg-white/5 rounded-lg p-4">
-            <div className="font-semibold mb-2">{name}</div>
-            <div className="space-y-2">
-              {allCategories.map((cat) => {
+      {/* SƏSVERMƏ BLOKU — KATEQORİYA → OYUNÇULAR */}
+      <section className="space-y-6">
+        {allCategories.map((cat) => (
+          <div
+            key={cat}
+            className="bg-white/5 rounded-lg p-0 border border-white/10"
+          >
+            {/* Kateqoriya başlığı */}
+            <div className="px-4 py-3 border-b border-orange-600">
+              <h2 className="text-lg font-bold text-orange-600">{cat}</h2>
+            </div>
+
+            {/* Oyunçuların cavabları */}
+            <div className="divide-y divide-white/10">
+              {players.map((name) => {
                 const text = (answers?.[name]?.[cat] || '').trim();
                 const v = votes?.[name]?.[cat] || { positive: 0, negative: 0 };
                 const key = `${name}::${cat}`;
@@ -262,34 +272,25 @@ export default function GameStat() {
                 const disableNeg = isBlank || choice === 'negative';
 
                 return (
-                  <div key={cat} className="flex items-center gap-3">
-                    <div className="w-40 shrink-0 text-white/80">{cat}</div>
+                  <div key={name} className="p-4 flex items-center gap-3">
+                    {/* Oyunçu adı */}
+                    <div className="w-40 shrink-0 font-semibold">{name}</div>
+
+                    {/* Cavab mətni */}
                     <div className="flex-1">
                       {text || <span className="text-white/40">— boş —</span>}
                     </div>
+
+                    {/* Səs düymələri */}
                     <div className="flex items-center gap-2">
-                      <button
-                        disabled={disablePos}
-                        onClick={() => cast(name, cat, 'positive')}
-                        className={`px-2 py-1 rounded ${
-                          disablePos
-                            ? 'bg-emerald-900/40 cursor-not-allowed'
-                            : 'bg-emerald-600 hover:bg-emerald-700'
-                        }`}
-                      >
-                        ✓ {v.positive || 0}
-                      </button>
-                      <button
-                        disabled={disableNeg}
-                        onClick={() => cast(name, cat, 'negative')}
-                        className={`px-2 py-1 rounded ${
-                          disableNeg
-                            ? 'bg-rose-900/40 cursor-not-allowed'
-                            : 'bg-rose-600 hover:bg-rose-700'
-                        }`}
-                      >
-                        ✗ {v.negative || 0}
-                      </button>
+                      <VoteButtons
+                        v={v}
+                        disablePos={disablePos}
+                        disableNeg={disableNeg}
+                        cast={cast}
+                        name={name}
+                        cat={cat}
+                      />
                     </div>
                   </div>
                 );
