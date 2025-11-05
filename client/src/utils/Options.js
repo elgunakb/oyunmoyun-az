@@ -22,11 +22,11 @@ export const NAV_LINKS = [
   },
   {
     href: '#',
-    label: 'İkinci səhifə',
+    label: 'Açıq otaqlar',
   },
   {
     href: '#',
-    label: 'Üçüncü səhifə',
+    label: 'Şikayət və təkliflər',
   },
 ];
 
