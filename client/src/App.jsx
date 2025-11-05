@@ -17,6 +17,7 @@ import Header from './components/Header/Header';
 import WaitingRoom from './pages/WaitingRoom/WaitingRoom';
 import GameRoom from './pages/Gameroom/GamerRoom';
 import GameStat from './pages/GameStat/GameStat';
+import GameSingerSolo from './pages/GueesTheSinger/GuessTheSinger';
 
 const App = () => {
   return (
@@ -39,6 +40,7 @@ const App = () => {
               <Route path="/waiting-room/:code" element={<WaitingRoom />} />
               <Route path="/game/:code" element={<GameRoom />} />
               <Route path="/game-stat/:code" element={<GameStat />} />
+              <Route path="/game/singer/:roomId" element={<GameSingerSolo />} />
             </Route>
 
             {/* 404 */}

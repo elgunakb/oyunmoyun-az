@@ -2,6 +2,319 @@ const { Server } = require('socket.io');
 const EVENTS = require('./events');
 
 const rooms = new Map();
+const soloRooms = new Map();
+
+async function fetchJson(url) {
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+function normalizeTracks(results) {
+  return (results || [])
+    .filter((x) => x?.previewUrl && x?.artistName && x?.trackName)
+    .map((x) => ({
+      trackId: String(x.trackId),
+      artist: x.artistName,
+      title: x.trackName,
+      previewUrl: x.previewUrl,
+      artwork: x.artworkUrl100 || x.artworkUrl60 || null,
+    }));
+}
+
+/**
+ * category:
+ *  - 'pop' | 'rock' | 'rap' | 'mix' (mövcud)
+ *  - 'azerbaijani' | 'turkish' (yeni)
+ */
+async function fetchItunesTracks(category = 'pop', limit = 60) {
+  const queries = [];
+  if (category === 'azerbaijani') {
+    const countries = ['az'];
+    const terms = [
+      // Populyar müğənnilər (klassik + müasir)
+      'Aygün Kazımova',
+      'Zeynəb Həsəni',
+      'Röya',
+      'Zülfiyyə Xanbabayeva',
+      'Üzeyir Mehdizadə',
+      'Brilliant Dadaşova',
+      'Tünzalə Ağayeva',
+      'Natavan Həbibi',
+      'Nigar Camal',
+      'Ramin Nabran',
+      'Sabina Babayeva',
+      'Sevil Sevinc',
+      'Orxan Zeynallı',
+      'Sevil & Sevinc',
+      'Xatirə İslam',
+      'Orkhan Zeynalli',
+      'Nisa Qasımova',
+      'Zarina Qurbanova',
+      'Zarina Gurbanova',
+      'Nigar Muharrem',
+      'Eldar Qasımov',
+      'Safura Əlizadə',
+      'Narmin Karimbayova',
+      'Uzeyir Mehdizade',
+      'Miri Yusif',
+      'MiriYusif',
+      'Zamiq Hüseynov',
+      'Çingiz Mustafayev',
+      'Rauf & Faik',
+      'Rauf Faik',
+      'Aysel Teymurzadə',
+      'Məryəm Şabanova',
+      'Xpert',
+      'Niyaməddin',
+      'Eyyub Yaqubov',
+      'Abbas Bağırov',
+      'Flora Kərimova',
+      'Elşad Xose',
+      'Paster',
+      'Nahidə Babaşlı',
+      'Nahide Babashli',
+      'Murad Arif',
+    ];
+    for (const c of countries) {
+      for (const t of terms) {
+        queries.push({ country: c, term: t });
+      }
+    }
+  } else if (category === 'turkish') {
+    const countries = ['tr', 'de', 'us']; // TR əsas, diaspora üçün DE/US fallback
+    const terms = [
+      'Türk',
+      'Turkish',
+      'Türkçe',
+      'Türk Pop',
+      'Arabesk',
+      'Anadolu Rock',
+      'Rap',
+      'Pop',
+      'Hit',
+    ];
+    for (const c of countries) {
+      for (const t of terms) {
+        queries.push({ country: c, term: t });
+      }
+    }
+  } else if (category === 'mix') {
+    // qarışıq üçün bir az pop/rock/rap
+    const pairs = [
+      { country: 'us', term: 'Pop' },
+      { country: 'us', term: 'Rock' },
+      { country: 'us', term: 'Rap' },
+      { country: 'gb', term: 'Pop' },
+      { country: 'de', term: 'Pop' },
+    ];
+    queries.push(...pairs);
+  } else {
+    // klassik janrlar: pop/rock/rap
+    const countries = ['us', 'gb', 'de'];
+    for (const c of countries) {
+      queries.push({ country: c, term: category });
+    }
+  }
+
+  // Sorğuları icra et və yığ
+  const collected = [];
+  const seenIds = new Set();
+  for (const { country, term } of queries) {
+    const url = new URL('https://itunes.apple.com/search');
+    url.searchParams.set('media', 'music');
+    url.searchParams.set('entity', 'song');
+    url.searchParams.set('term', term);
+    url.searchParams.set('limit', String(Math.min(50, limit)));
+    url.searchParams.set('country', country);
+    const data = await fetchJson(url);
+    const items = normalizeTracks(data?.results);
+
+    for (const t of items) {
+      if (!seenIds.has(t.trackId)) {
+        collected.push(t);
+        seenIds.add(t.trackId);
+      }
+    }
+    if (collected.length >= limit) break; // kifayət qədər topladıq
+  }
+
+  // Əgər hələ də azdırsa, “universal” fallback
+  if (collected.length < Math.floor(limit * 0.6)) {
+    const fallback = [
+      { country: 'us', term: 'world music' },
+      { country: 'us', term: 'international pop' },
+    ];
+    for (const { country, term } of fallback) {
+      const url = new URL('https://itunes.apple.com/search');
+      url.searchParams.set('media', 'music');
+      url.searchParams.set('entity', 'song');
+      url.searchParams.set('term', term);
+      url.searchParams.set('limit', String(Math.min(50, limit)));
+      url.searchParams.set('country', country);
+      const data = await fetchJson(url);
+      const items = normalizeTracks(data?.results);
+      for (const t of items) {
+        if (!seenIds.has(t.trackId)) {
+          collected.push(t);
+          seenIds.add(t.trackId);
+        }
+      }
+      if (collected.length >= limit) break;
+    }
+  }
+
+  // Hələ də çatmırsa, mövcud pop/rock/rap ilə tamamla
+  if (collected.length < limit) {
+    const extras = ['Pop', 'Rock', 'Rap'];
+    for (const ex of extras) {
+      const url = new URL('https://itunes.apple.com/search');
+      url.searchParams.set('media', 'music');
+      url.searchParams.set('entity', 'song');
+      url.searchParams.set('term', ex);
+      url.searchParams.set('limit', String(Math.min(50, limit)));
+      url.searchParams.set('country', 'us');
+      const data = await fetchJson(url);
+      const items = normalizeTracks(data?.results);
+      for (const t of items) {
+        if (!seenIds.has(t.trackId)) {
+          collected.push(t);
+          seenIds.add(t.trackId);
+        }
+      }
+      if (collected.length >= limit) break;
+    }
+  }
+
+  // təsadüfiləşdir və kəs
+  return collected.sort(() => Math.random() - 0.5).slice(0, limit);
+}
+
+function pickDistractors(allArtists, correct, count = 3) {
+  const pool = allArtists.filter((a) => a !== correct);
+  const shuffled = pool.sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
+
+function buildSoloQuestions(tracks, rounds) {
+  const byArtist = new Map();
+  for (const t of tracks) {
+    if (!byArtist.has(t.artist)) byArtist.set(t.artist, []);
+    byArtist.get(t.artist).push(t);
+  }
+  const unique = Array.from(byArtist.values()).flatMap((list) =>
+    list.slice(0, 2)
+  );
+  const chosen = unique.sort(() => Math.random() - 0.5).slice(0, rounds);
+
+  const allArtists = Array.from(new Set(tracks.map((t) => t.artist)));
+
+  return chosen.map((t) => {
+    const distractors = pickDistractors(allArtists, t.artist, 3);
+    const options = [t.artist, ...distractors].sort(() => Math.random() - 0.5);
+    return {
+      id: t.trackId,
+      audio: t.previewUrl,
+      title: t.title,
+      artwork: t.artwork,
+      correctArtist: t.artist,
+      options,
+    };
+  });
+}
+
+function clearSoloTimers(room) {
+  if (!room) return;
+  if (room.state?.roundTimer) {
+    clearTimeout(room.state.roundTimer);
+    room.state.roundTimer = null;
+  }
+  if (room.state?.tickInterval) {
+    clearInterval(room.state.tickInterval);
+    room.state.tickInterval = null;
+  }
+}
+
+function soloStartRound(io, roomId) {
+  const room = soloRooms.get(roomId);
+  if (!room) return;
+
+  const { state } = room;
+  const q = state.questions[state.roundIndex];
+  if (!q) return soloFinishGame(io, roomId);
+
+  clearSoloTimers(room);
+
+  state.roundStartedAt = Date.now();
+  state.timeLeft = state.roundTime;
+  state.answered = false;
+
+  io.to(roomId).emit('solo:state', {
+    phase: 'playing',
+    roundIndex: state.roundIndex,
+    totalRounds: state.totalRounds,
+    timeLeft: state.timeLeft,
+    question: {
+      id: q.id,
+      audio: q.audio,
+      artwork: q.artwork,
+      options: q.options,
+      titleHint: '—',
+    },
+    score: state.score,
+  });
+
+  state.tickInterval = setInterval(() => {
+    const r = soloRooms.get(roomId);
+    if (!r) return clearInterval(state.tickInterval);
+    r.state.timeLeft -= 1;
+    io.to(roomId).emit('solo:tick', { timeLeft: r.state.timeLeft });
+  }, 1000);
+
+  state.roundTimer = setTimeout(() => {
+    soloRevealAndNext(io, roomId);
+  }, state.roundTime * 1000);
+}
+
+function soloRevealAndNext(io, roomId) {
+  const room = soloRooms.get(roomId);
+  if (!room) return;
+  const { state } = room;
+  clearSoloTimers(room);
+
+  const q = state.questions[state.roundIndex];
+  io.to(roomId).emit('solo:reveal', {
+    roundIndex: state.roundIndex,
+    correctArtist: q.correctArtist,
+    title: q.title,
+  });
+
+  setTimeout(() => {
+    state.roundIndex += 1;
+    if (state.roundIndex >= state.totalRounds)
+      return soloFinishGame(io, roomId);
+    soloStartRound(io, roomId);
+  }, 1500);
+}
+
+function soloFinishGame(io, roomId) {
+  const room = soloRooms.get(roomId);
+  if (!room) return;
+  clearSoloTimers(room);
+  const { state } = room;
+
+  io.to(roomId).emit('solo:finished', {
+    totalRounds: state.totalRounds,
+    score: state.score,
+    leaderboard: [{ name: state.playerName, score: state.score }],
+  });
+
+  setTimeout(() => soloRooms.delete(roomId), 30_000);
+}
 
 function safeArray(a) {
   return Array.isArray(a) ? a : [];
@@ -22,7 +335,7 @@ function pickNextLetter(room) {
   room.meta.usedLetters.add(chosen);
   return chosen;
 }
-
+//
 function emitRoom(io, room, extra = {}) {
   const payload = {
     _id: room.id,
@@ -305,6 +618,94 @@ function nextRound(io, room) {
 // ===== Socket.IO bağlamaları =====
 function attachGameServer(io) {
   io.on('connection', (socket) => {
+    socket.on('solo:create', async (payload, ack) => {
+      try {
+        const {
+          rounds = 5,
+          roundTime = 30,
+          category = 'pop',
+          nickname = 'Player',
+        } = payload || {};
+        const roomId = 'solo_' + cryptoRandomId();
+
+        const tracks = await fetchItunesTracks(
+          category,
+          Math.max(40, rounds * 10)
+        );
+        const questions = buildSoloQuestions(tracks, rounds);
+
+        const state = {
+          roomId,
+          playerSocketId: socket.id,
+          playerName: nickname,
+          totalRounds: rounds,
+          roundTime,
+          questions,
+          roundIndex: 0,
+          timeLeft: roundTime,
+          answered: false,
+          score: 0,
+          roundTimer: null,
+          tickInterval: null,
+        };
+
+        soloRooms.set(roomId, { id: roomId, state });
+        socket.join(roomId);
+        ack?.({ ok: true, roomId });
+
+        // 👇 Listener-lərin qoşulmasını gözləmək üçün cüzi gecikmə
+        setTimeout(() => soloStartRound(io, roomId), 250);
+      } catch (e) {
+        ack?.({ ok: false, error: e?.message || 'Create failed' });
+      }
+    });
+
+    // === SOLO: sync (client mount-dan sonra cari vəziyyəti ver) ===
+    socket.on('solo:sync', ({ roomId }, ack) => {
+      const room = soloRooms.get(roomId);
+      if (!room) return ack?.({ ok: false, error: 'room_not_found' });
+
+      const { state } = room;
+      const q = state.questions[state.roundIndex];
+      if (!q) return ack?.({ ok: false, error: 'no_question' });
+
+      ack?.({
+        ok: true,
+        payload: {
+          phase: 'playing',
+          roundIndex: state.roundIndex,
+          totalRounds: state.totalRounds,
+          timeLeft: state.timeLeft,
+          question: {
+            id: q.id,
+            audio: q.audio,
+            artwork: q.artwork,
+            options: q.options,
+            titleHint: '—',
+          },
+          score: state.score,
+        },
+      });
+    });
+
+    // === SOLO: answer ===
+    socket.on('solo:answer', ({ roomId, artist }) => {
+      const room = soloRooms.get(roomId);
+      if (!room) return;
+      const { state } = room;
+      if (state.answered) return; // accept once
+
+      const q = state.questions[state.roundIndex];
+      const isCorrect = artist === q.correctArtist;
+      state.answered = true;
+
+      if (isCorrect) {
+        state.score += 10 + Math.max(0, state.timeLeft);
+      }
+
+      // reveal & go next
+      soloRevealAndNext(io, roomId);
+    });
     // JOIN
     socket.on('room:join', ({ code, roomId, player }) => {
       const id = roomId || code;

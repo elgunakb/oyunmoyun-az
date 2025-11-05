@@ -1,6 +1,13 @@
+// client/src/lib/socket.js
 import { io } from 'socket.io-client';
-const socket = io(import.meta.env.VITE_WS_URL ?? 'http://localhost:5000', {
+
+const URL = import.meta.env.VITE_WS_URL ?? 'http://localhost:8000';
+const PATH = import.meta.env.VITE_WS_PATH ?? '/socket.io';
+
+const socket = io(URL, {
   transports: ['websocket'],
-  withCredentials: false,
+  withCredentials: true, // CORS server credentials:true ilə uyğundur
+  path: PATH,
 });
+
 export default socket;

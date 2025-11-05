@@ -1,36 +1,41 @@
-// client/src/components/GamesBarrier/MusicFindModal.jsx
+// client/src/components/GuessTheSinger/GuessTheSinger.jsx
 import React, { useId, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '../Modal/Modal';
 import AccessibleButton from '../AccessibleButton/AccessibleButton';
-import { X, Zap, Music, Timer } from 'lucide-react';
+import { X, Zap, Music, Timer, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import socket from '../../lib/socket';
 
-export default function MusicFindModal({ open, onClose, game }) {
+export default function GuessTheSinger({ open, onClose, game }) {
   const titleId = useId();
-  const [roomName, setRoomName] = useState('');
-  const [rounds, setRounds] = useState(5);
-  const [roundTime, setRoundTime] = useState(30);
-  const [category, setCategory] = useState('pop');
+  const navigate = useNavigate();
+
+  const [rounds, setRounds] = useState(10);
+  const [roundTime, setRoundTime] = useState(15);
+  const [category, setCategory] = useState('azerbaijani');
+  const [nickname, setNickname] = useState('');
   const [error, setError] = useState('');
 
-  const canCreate = roomName.trim().length > 0;
+  const canCreate = nickname.trim().length > 0;
 
-  const handleCreate = async (e) => {
+  const handleCreate = (e) => {
     e.preventDefault();
     setError('');
     if (!canCreate) return;
 
-    try {
-      // TODO: burada öz server/supabase axınını qoşursan
-      // məsələn:
-      // const { data, error } = await supabase.functions.invoke('create-music-room', { body: { roomName, rounds, roundTime, category } });
-      // if (error) throw error;
-      // navigate(`/waiting-room/${data.room.code}`);
-
-      onClose?.();
-    } catch (err) {
-      setError(err?.message || 'Gözlənilməyən xəta baş verdi.');
-    }
+    socket.emit(
+      'solo:create',
+      { rounds, roundTime, category, nickname: nickname.trim() },
+      (resp) => {
+        if (!resp?.ok) {
+          setError(resp?.error || 'Xəta baş verdi.');
+          return;
+        }
+        onClose?.();
+        navigate(`/game/singer/${resp.roomId}`, { state: { nickname } });
+      }
+    );
   };
 
   return (
@@ -42,10 +47,10 @@ export default function MusicFindModal({ open, onClose, game }) {
           </div>
           <div>
             <h3 id={titleId} className="text-lg font-extrabold tracking-tight">
-              {game?.title} — Otaq yarat
+              {game?.title} — Oyun qur
             </h3>
             <p className="text-base text-white/70 -mt-0.5">
-              Musiqi parçalarına görə oxuyanı tap! Öz parametrlərini seç.
+              Janrı, round sayını və vaxtı seç — başlayırıq!
             </p>
           </div>
         </div>
@@ -63,18 +68,22 @@ export default function MusicFindModal({ open, onClose, game }) {
         onSubmit={handleCreate}
         className="p-4 sm:p-5 space-y-5 overflow-y-auto"
       >
-        {/* Otaq adı */}
-        {/* <section>
+        {/* Nickname */}
+        <section>
           <label className="mb-2 block text-base font-semibold text-white/90">
-            Otaq adı <span className="text-white/50 font-normal">(mütləq)</span>
+            Ad (nickname){' '}
+            <span className="text-white/50 font-normal">(mütləq)</span>
           </label>
-          <input
-            value={roomName}
-            onChange={(e) => setRoomName(e.target.value)}
-            placeholder="Məs: Musiqi gecəsi"
-            className="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-base outline-none focus:border-orange-400/60 placeholder:text-white/40"
-          />
-        </section> */}
+          <div className="relative">
+            <input
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              placeholder="Məs: DJ Aylin"
+              className="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-base outline-none focus:border-orange-400/60 pr-10"
+            />
+            <User className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+          </div>
+        </section>
 
         {/* Round sayı və vaxtı */}
         <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -120,6 +129,12 @@ export default function MusicFindModal({ open, onClose, game }) {
             onChange={(e) => setCategory(e.target.value)}
             className="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-base outline-none focus:border-orange-400/60 text-white"
           >
+            <option value="azerbaijani" className="bg-gray-800">
+              Azərbaycan mahnıları
+            </option>
+            <option value="turkish" className="bg-gray-800">
+              Türk mahnıları
+            </option>
             <option value="pop" className="bg-gray-800">
               Pop
             </option>
@@ -135,7 +150,6 @@ export default function MusicFindModal({ open, onClose, game }) {
           </select>
         </section>
 
-        {/* Error + Create */}
         <div className="pt-2 border-t border-white/10">
           {error && <p className="mb-2 text-xs text-red-400">{error}</p>}
           <AccessibleButton
@@ -150,7 +164,7 @@ export default function MusicFindModal({ open, onClose, game }) {
             ].join(' ')}
           >
             <Zap className="w-5 h-5" />
-            Otaq yarat
+            Oyuna başla
           </AccessibleButton>
         </div>
       </form>
@@ -158,11 +172,8 @@ export default function MusicFindModal({ open, onClose, game }) {
   );
 }
 
-MusicFindModal.propTypes = {
+GuessTheSinger.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func,
-  game: PropTypes.shape({
-    id: PropTypes.string,
-    title: PropTypes.string,
-  }),
+  game: PropTypes.shape({ id: PropTypes.string, title: PropTypes.string }),
 };
