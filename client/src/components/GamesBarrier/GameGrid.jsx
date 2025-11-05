@@ -1,7 +1,8 @@
+// client/src/components/GamesBarrier/GameGrid.jsx
 import React, { useMemo, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import GameCard from './GameCard';
-import GameDetailsModal from './GameDetailsModal';
+import { GAME_MODAL_REGISTRY, DEFAULT_GAME_MODAL } from './modalRegistry';
 
 export default function GameGrid({ games, categories }) {
   const items = useMemo(() => games ?? [], [games]);
@@ -9,6 +10,10 @@ export default function GameGrid({ games, categories }) {
 
   const onOpen = useCallback((game) => setSelected(game), []);
   const onClose = useCallback(() => setSelected(null), []);
+
+  const ModalComp = selected
+    ? GAME_MODAL_REGISTRY[selected.id] || DEFAULT_GAME_MODAL
+    : null;
 
   return (
     <>
@@ -25,12 +30,14 @@ export default function GameGrid({ games, categories }) {
         ))}
       </ul>
 
-      <GameDetailsModal
-        open={!!selected}
-        onClose={onClose}
-        game={selected}
-        categories={categories}
-      />
+      {ModalComp && (
+        <ModalComp
+          open={!!selected}
+          onClose={onClose}
+          game={selected}
+          categories={categories}
+        />
+      )}
     </>
   );
 }

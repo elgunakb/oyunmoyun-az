@@ -1,4 +1,4 @@
-import { Swords } from 'lucide-react';
+import { Music, Swords } from 'lucide-react';
 import adSeher from '../assets/919c5441527e6f5a16cd8e1904f3de49.png';
 import musicFind from '../assets/music-svg.svg';
 import {
@@ -115,7 +115,7 @@ export const GAME_SECTIONS = [
     title: 'Tək nəfərlik',
     ctaText: 'Hamısı',
     games: [
-      { id: 'x-o-x', title: 'Oxuyanı tap', image: musicFind, icon: Swords },
+      { id: 'x-o-x', title: 'Oxuyanı tap', image: musicFind, icon: Music },
     ],
   },
 ];

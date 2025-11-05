@@ -7,8 +7,8 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { Zap, X, Check, Hash, EyeOff, Eye } from 'lucide-react';
-import Modal from '../Modal/Modal';
-import AccessibleButton from '../AccessibleButton/AccessibleButton';
+import Modal from '../Modal/Modal.jsx';
+import AccessibleButton from '../AccessibleButton/AccessibleButton.jsx';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient.js';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -155,12 +155,7 @@ function LetterBtn({ active, children, onClick }) {
   );
 }
 
-export default function GameDetailsModal({
-  open,
-  onClose,
-  game,
-  categories = [],
-}) {
+export default function AdSeherModal({ open, onClose, game, categories = [] }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [submitErr, setSubmitErr] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -447,7 +442,7 @@ export default function GameDetailsModal({
   );
 }
 
-GameDetailsModal.propTypes = {
+AdSeherModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func,
   game: PropTypes.shape({
