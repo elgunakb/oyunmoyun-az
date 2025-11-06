@@ -150,6 +150,21 @@ exports.getMe = async (req, res) => {
 
 // -------- Çıxış (session sil) ----------
 exports.logout = async (_req, res) => {
-  res.clearCookie('session', { path: '/' });
+  const opts = { path: '/', sameSite: 'none', secure: true };
+
+  // 1) Standart clear
+  res.clearCookie('session', opts);
+
+  // 2) “Double tap”: eyni atributlarla expiration=keçmiş
+  res.cookie('session', '', { ...opts, httpOnly: true, expires: new Date(0) });
+
+  // 3) Köhnə variantları da silək (əvvəllər Lax yazmısızsa)
+  res.clearCookie('session', { path: '/', sameSite: 'lax' });
+  res.cookie('session', '', {
+    path: '/',
+    sameSite: 'lax',
+    expires: new Date(0),
+  });
+
   return res.status(204).send();
 };
