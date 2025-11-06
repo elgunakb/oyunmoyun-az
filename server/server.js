@@ -21,21 +21,38 @@ const SWAGGER_SERVER_URL =
   process.env.SWAGGER_SERVER_URL || `http://localhost:${PORT}`;
 
 app.set('trust proxy', 1);
+const allowedOrigins = (
+  process.env.CORS_ORIGINS ||
+  process.env.CLIENT_ORIGIN ||
+  ''
+)
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 app.use(
   cors({
-    origin: (origin, cb) => {
-      const allowed = (process.env.CORS_ORIGINS || CLIENT_ORIGIN)
-        .split(',')
-        .map((s) => s.trim());
-      if (!origin || allowed.includes(origin)) return cb(null, true);
+    origin(origin, cb) {
+      // Postman/healthcheck kimi origin-siz request-lərə icazə ver
+      if (!origin) return cb(null, true);
+      if (allowedOrigins.includes(origin)) return cb(null, true);
       return cb(new Error(`Not allowed by CORS: ${origin}`));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+    ],
+    exposedHeaders: ['Content-Disposition'], // fayl yükləmələri üçün faydalıdır
   })
 );
+
+// Preflight-ları rahatlaşdır
+app.options('*', cors());
 
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));

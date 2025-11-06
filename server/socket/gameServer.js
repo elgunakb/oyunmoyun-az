@@ -912,14 +912,21 @@ function resetGame(room) {
 
 // --- Socket.IO factory ---
 function createSocketServer(httpServer) {
-  const io = new Server(httpServer, {
+  const allowedOrigins = (
+    process.env.CORS_ORIGINS ||
+    process.env.CLIENT_ORIGIN ||
+    ''
+  )
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const io = new Server(server, {
     cors: {
-      origin: parseAllowedOrigins(),
+      origin: allowedOrigins,
+      methods: ['GET', 'POST'],
       credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
     },
-    path: process.env.SOCKET_IO_PATH || '/socket.io',
   });
 
   attachGameServer(io);
