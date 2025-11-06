@@ -124,7 +124,7 @@ const Login = () => {
 
           <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mx-auto" />
           <p className="text-sm text-white mt-2">
-            Ana səhifəyə yönləndirilir...
+            Ana səhifəyə yənləndirilir...
           </p>
         </div>
       </div>
