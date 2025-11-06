@@ -20,13 +20,12 @@ const signSession = (player) => {
 const setSessionCookie = (res, token, expiresAt) => {
   res.cookie('session', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: true, // Render HTTPS, mütləq true
+    sameSite: 'none', // ŞƏRTSİZ NONE — prod check etmə
     expires: expiresAt,
     path: '/',
   });
 };
-
 // -------- Google ilə giriş (Supabase) ----------
 exports.loginWithGoogleSupabase = async (req, res) => {
   try {
