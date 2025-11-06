@@ -20,8 +20,8 @@ const signSession = (player) => {
 const setSessionCookie = (res, token, expiresAt) => {
   res.cookie('session', token, {
     httpOnly: true,
-    secure: true, // Render HTTPS-dədir
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
     expires: expiresAt,
     path: '/',
   });
