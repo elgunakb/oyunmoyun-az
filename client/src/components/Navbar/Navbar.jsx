@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { NAV_LINKS } from '../../utils/Options';
 
 export default function Navbar() {

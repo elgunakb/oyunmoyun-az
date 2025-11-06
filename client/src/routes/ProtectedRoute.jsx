@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '../src/context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function ProtectedRoute({ requiredRole }) {
   const { isAuthenticated, loading, user } = useAuth();
@@ -15,7 +15,6 @@ export default function ProtectedRoute({ requiredRole }) {
   }
 
   if (!isAuthenticated) {
-    // yalnız login-ə burax
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

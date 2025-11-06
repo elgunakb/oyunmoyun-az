@@ -824,9 +824,6 @@ function attachGameServer(io) {
 
     // START
     socket.on(EVENTS.START, (payload) => {
-      console.log('[game:start] payload =', payload);
-      console.log('[game:start] rooms keys =', Array.from(rooms.keys()));
-
       const id = payload.roomId || payload.code;
       const room = rooms.get(id);
       if (!room) {
@@ -834,12 +831,7 @@ function attachGameServer(io) {
         return;
       }
       const secs = Number(payload?.duration) || room.meta.timer || 60;
-      console.log('[game:start] starting', {
-        id,
-        secs,
-        categories: room.meta.categories,
-        letters: room.meta.letters,
-      });
+
       startRound(io, room, secs);
     });
 

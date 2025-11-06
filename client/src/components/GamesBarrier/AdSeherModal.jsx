@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { Zap, X, Check, Hash, EyeOff, Eye } from 'lucide-react';
+
 import Modal from '../Modal/Modal.jsx';
 import AccessibleButton from '../AccessibleButton/AccessibleButton.jsx';
 import { useNavigate } from 'react-router-dom';
@@ -17,13 +18,13 @@ import {
   LETTERS_A_Z,
   GAME_TIMES,
 } from '../../utils/Options.js';
-import socket from '../../lib/socket.js';
 
 function setToggle(prev, value) {
   const next = new Set(prev);
   next.has(value) ? next.delete(value) : next.add(value);
   return next;
 }
+
 function ensureAtLeastOne(set, fallbackValue) {
   return set.size > 0 ? set : new Set([fallbackValue]);
 }
@@ -111,6 +112,7 @@ function Section({ title, aside, children }) {
     </section>
   );
 }
+
 function FieldLabel({ htmlFor, children, hint }) {
   return (
     <label
@@ -122,6 +124,7 @@ function FieldLabel({ htmlFor, children, hint }) {
     </label>
   );
 }
+
 function PillOption({ active, children, onClick }) {
   return (
     <AccessibleButton
@@ -138,6 +141,7 @@ function PillOption({ active, children, onClick }) {
     </AccessibleButton>
   );
 }
+
 function LetterBtn({ active, children, onClick }) {
   return (
     <AccessibleButton
@@ -156,12 +160,13 @@ function LetterBtn({ active, children, onClick }) {
 }
 
 export default function AdSeherModal({ open, onClose, game, categories = [] }) {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const titleId = useId();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
   const [submitErr, setSubmitErr] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const titleId = useId();
-  const navigate = useNavigate();
-  const { user } = useAuth(); // { name, playerId, image, provider }
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   const selectedCategories = useMemo(
     () => (categories.length ? categories : [game?.title].filter(Boolean)),
@@ -215,7 +220,7 @@ export default function AdSeherModal({ open, onClose, game, categories = [] }) {
         } else if (data?.room?.code) {
           navigate(`/waiting-room/${data.room.code}`);
         }
-        onClose?.(); // modal bağlansın
+        onClose?.();
       } catch (err) {
         setSubmitErr(err?.message || 'Gözlənilməyən xəta baş verdi.');
       } finally {

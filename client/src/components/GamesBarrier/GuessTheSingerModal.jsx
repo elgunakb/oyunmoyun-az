@@ -1,39 +1,40 @@
-// client/src/components/GuessTheSinger/GuessTheSinger.jsx
-import React, { useId, useState } from 'react';
 import PropTypes from 'prop-types';
 import Modal from '../Modal/Modal';
-import AccessibleButton from '../AccessibleButton/AccessibleButton';
-import { X, Zap, Music, Timer, User } from 'lucide-react';
+import React, { useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import socket from '../../lib/socket';
 
-export default function GuessTheSinger({ open, onClose, game }) {
+import socket from '../../lib/socket';
+import { X, Zap, Music, Timer, User } from 'lucide-react';
+import AccessibleButton from '../AccessibleButton/AccessibleButton';
+
+export default function GuessTheSingerModal({ open, onClose, game }) {
   const titleId = useId();
   const navigate = useNavigate();
 
+  const [error, setError] = useState('');
   const [rounds, setRounds] = useState(10);
+  const [nickname, setNickname] = useState('');
   const [roundTime, setRoundTime] = useState(15);
   const [category, setCategory] = useState('azerbaijani');
-  const [nickname, setNickname] = useState('');
-  const [error, setError] = useState('');
-
-  const canCreate = nickname.trim().length > 0;
 
   const handleCreate = (e) => {
     e.preventDefault();
     setError('');
-    if (!canCreate) return;
+
+    const safeName = nickname.trim() || 'Player';
 
     socket.emit(
       'solo:create',
-      { rounds, roundTime, category, nickname: nickname.trim() },
+      { rounds, roundTime, category, nickname: safeName },
       (resp) => {
         if (!resp?.ok) {
           setError(resp?.error || 'Xəta baş verdi.');
           return;
         }
         onClose?.();
-        navigate(`/game/singer/${resp.roomId}`, { state: { nickname } });
+        navigate(`/game/singer/${resp.roomId}`, {
+          state: { nickname: safeName },
+        });
       }
     );
   };
@@ -68,23 +69,6 @@ export default function GuessTheSinger({ open, onClose, game }) {
         onSubmit={handleCreate}
         className="p-4 sm:p-5 space-y-5 overflow-y-auto"
       >
-        {/* Nickname */}
-        <section>
-          <label className="mb-2 block text-base font-semibold text-white/90">
-            Ad (nickname){' '}
-            <span className="text-white/50 font-normal">(mütləq)</span>
-          </label>
-          <div className="relative">
-            <input
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              placeholder="Məs: DJ Aylin"
-              className="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-base outline-none focus:border-orange-400/60 pr-10"
-            />
-            <User className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-          </div>
-        </section>
-
         {/* Round sayı və vaxtı */}
         <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -154,14 +138,9 @@ export default function GuessTheSinger({ open, onClose, game }) {
           {error && <p className="mb-2 text-xs text-red-400">{error}</p>}
           <AccessibleButton
             type="submit"
-            aria-disabled={!canCreate}
-            disabled={!canCreate}
-            className={[
-              'w-full mt-5 px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2',
-              canCreate
-                ? 'bg-orange-500 hover:bg-orange-400 text-white'
-                : 'bg-white/10 text-white/50 cursor-not-allowed',
-            ].join(' ')}
+            aria-disabled={false}
+            disabled={false}
+            className="w-full mt-5 px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-400 text-white"
           >
             <Zap className="w-5 h-5" />
             Oyuna başla
@@ -172,7 +151,7 @@ export default function GuessTheSinger({ open, onClose, game }) {
   );
 }
 
-GuessTheSinger.propTypes = {
+GuessTheSingerModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func,
   game: PropTypes.shape({ id: PropTypes.string, title: PropTypes.string }),

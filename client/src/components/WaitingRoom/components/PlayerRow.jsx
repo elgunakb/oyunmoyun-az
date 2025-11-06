@@ -4,6 +4,7 @@ import { Crown } from 'lucide-react';
 
 export default function PlayerRow({ player, isHost }) {
   const initial = (player.name?.[0] || 'U').toUpperCase();
+
   return (
     <li className="flex items-center justify-between p-2 sm:p-4 rounded-xl transition-all duration-300 bg-white/90 dark:bg-gray-800/50 border-2 border-gray-200/70 dark:border-gray-600/50 hover:bg-gray-50/90 dark:hover:bg-gray-700/50">
       <div className="mr-2 sm:mr-4">

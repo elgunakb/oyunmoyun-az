@@ -8,7 +8,6 @@ import GameGrid from '../GamesBarrier/GameGrid';
 export default function AccordionSection({ section, open, onToggle }) {
   const headerId = useId();
   const panelId = `${headerId}-panel`;
-  console.log(section.games);
 
   return (
     <section

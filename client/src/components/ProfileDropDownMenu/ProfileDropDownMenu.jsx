@@ -2,10 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { User, LogOut, ChevronDown } from 'lucide-react';
 
 export default function ProfileDropDownMenu({ user, logout }) {
-  const [open, setOpen] = useState(false);
   const ref = useRef(null);
+  const [open, setOpen] = useState(false);
 
-  // klik kənara olanda bağlanır
   useEffect(() => {
     function handleClick(e) {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false);
@@ -14,7 +13,6 @@ export default function ProfileDropDownMenu({ user, logout }) {
     return () => window.removeEventListener('click', handleClick);
   }, []);
 
-  // adın ilk hərfini götürmək üçün
   const initial = user?.name?.[0]?.toUpperCase() || '?';
 
   return (
@@ -44,7 +42,6 @@ export default function ProfileDropDownMenu({ user, logout }) {
           <li
             onClick={() => {
               setOpen(false);
-              // məsələn, "Profilə bax" səhifəsinə yönləndirmək istəsən burda router ilə aça bilərsən
             }}
             className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm text-white/90 hover:bg-white/10 transition"
           >
@@ -55,7 +52,7 @@ export default function ProfileDropDownMenu({ user, logout }) {
           <li
             onClick={() => {
               setOpen(false);
-              logout(); // 🔹 logout funksiyasını çağırırıq
+              logout();
             }}
             className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm text-white/90 hover:bg-white/10 transition"
           >

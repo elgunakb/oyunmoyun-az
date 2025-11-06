@@ -1,6 +1,6 @@
 import { Music, Swords } from 'lucide-react';
-import adSeher from '../assets/919c5441527e6f5a16cd8e1904f3de49.png';
-import musicFind from '../assets/music-svg.svg';
+import adSeher from '../assets/img/ad-seher-game-logo.png';
+import musicFind from '../assets/img/guess-the-singer-game-logo.svg';
 import {
   Search,
   Users,
@@ -115,7 +115,12 @@ export const GAME_SECTIONS = [
     title: 'Tək nəfərlik',
     ctaText: 'Hamısı',
     games: [
-      { id: 'x-o-x', title: 'Oxuyanı tap', image: musicFind, icon: Music },
+      {
+        id: 'guessTheSinger',
+        title: 'Oxuyanı tap',
+        image: musicFind,
+        icon: Music,
+      },
     ],
   },
 ];

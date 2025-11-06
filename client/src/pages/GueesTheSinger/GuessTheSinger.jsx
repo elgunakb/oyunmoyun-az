@@ -3,8 +3,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import socket from '../../lib/socket';
 import { Timer, Volume2, Crown } from 'lucide-react';
-import correctSfx from '../../assets/sounds/mixkit-correct-answer-tone-2870.wav';
-import wrongSfx from '../../assets/sounds/error-04-199275.mp3';
+import correctSfx from '../../assets/sounds/correct-answer.wav';
+import wrongSfx from '../../assets/sounds/wrong-answer.mp3';
 
 export default function GameSingerSolo() {
   const { roomId } = useParams();

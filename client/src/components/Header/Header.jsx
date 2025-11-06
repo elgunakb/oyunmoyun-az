@@ -1,9 +1,10 @@
 import React from 'react';
-import Logo from '../../assets/oyunmoyun-logo.svg';
-import LanguageSelector from '../LanguageSelector/LanguageSelector';
-import { useAuth } from '../../context/AuthContext';
-import ProfileDropDownMenu from '../ProfileDropDownMenu/ProfileDropDownMenu';
+
 import Navbar from '../Navbar/Navbar';
+import { useAuth } from '../../context/AuthContext';
+import Logo from '../../assets/img/oyunmoyun-logo.svg';
+import LanguageSelector from '../LanguageSelector/LanguageSelector';
+import ProfileDropDownMenu from '../ProfileDropDownMenu/ProfileDropDownMenu';
 
 export default function Header() {
   const { isAuthenticated, user, logout, loading } = useAuth();
@@ -37,12 +38,13 @@ export default function Header() {
                 ''
               )}
 
-              {/* Language switcher həmişə görünür */}
+              {/* Language switcher */}
               <LanguageSelector />
             </div>
           </div>
         </div>
       </header>
+      {/* if login */}
       {isAuthenticated && <Navbar />}
     </>
   );

@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+
 import AccessibleButton from '../AccessibleButton/AccessibleButton';
 
 const GameCard = React.memo(function GameCard({ title, image, Icon, onClick }) {

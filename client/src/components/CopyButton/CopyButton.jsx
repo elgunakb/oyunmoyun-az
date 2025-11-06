@@ -3,7 +3,6 @@ import { Clipboard, Check } from 'lucide-react';
 
 const CopyButton = ({ textToCopy }) => {
   const [copied, setCopied] = useState(false);
-  //   const textToCopy = 'npm install flowbite';
 
   const handleCopy = async () => {
     try {

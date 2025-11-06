@@ -1,15 +1,15 @@
-// client/src/components/GamesBarrier/GameGrid.jsx
-import React, { useMemo, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
+import React, { useMemo, useState, useCallback } from 'react';
+
 import GameCard from './GameCard';
 import { GAME_MODAL_REGISTRY, DEFAULT_GAME_MODAL } from './modalRegistry';
 
 export default function GameGrid({ games, categories }) {
-  const items = useMemo(() => games ?? [], [games]);
   const [selected, setSelected] = useState(null);
+  const items = useMemo(() => games ?? [], [games]);
 
-  const onOpen = useCallback((game) => setSelected(game), []);
   const onClose = useCallback(() => setSelected(null), []);
+  const onOpen = useCallback((game) => setSelected(game), []);
 
   const ModalComp = selected
     ? GAME_MODAL_REGISTRY[selected.id] || DEFAULT_GAME_MODAL

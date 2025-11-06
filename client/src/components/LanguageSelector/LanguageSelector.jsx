@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Globe, ChevronDown, Check } from 'lucide-react';
+
 import { LANGUAGE_OPTIONS } from '../../utils/Options';
 
 export default function LanguageSelector({ onChange }) {

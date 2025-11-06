@@ -11,4 +11,3 @@ const connectDB = async () => {
 };
 
 module.exports = connectDB;
-//  1 40 10

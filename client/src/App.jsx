@@ -8,8 +8,8 @@ import { Toaster } from 'react-hot-toast';
 
 import Login from './pages/Auth/Login';
 import MyProfile from './pages/MyProfile/MyProfile';
-import ProtectedRoute from '../routes/ProtectedRoute';
-import GuestRoute from '../routes/GuestRoute';
+import ProtectedRoute from './routes/ProtectedRoute';
+import GuestRoute from './routes/GuestRoute';
 import LandingPage from './pages/LandingPage/LandingPage';
 import { AuthProvider } from './context/AuthContext';
 import AuthCallback from './pages/Auth/AuthCallBack';

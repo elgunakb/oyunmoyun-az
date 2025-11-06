@@ -8,10 +8,11 @@ import { useAuth } from '../../context/AuthContext';
 
 export default function AuthCallback() {
   const { login } = useAuth();
+  const ran = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
+
   const [err, setErr] = useState('');
-  const ran = useRef(false); // StrictMode üçün qoruma
 
   useEffect(() => {
     if (ran.current) return;

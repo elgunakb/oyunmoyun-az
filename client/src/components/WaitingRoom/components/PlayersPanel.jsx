@@ -2,9 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Users } from 'lucide-react';
 import PlayerRow from './PlayerRow';
-
+import BuyMeACoffeeButton from '../../BuyMeACoffee/BuyMeACoffeeButton';
 export default function PlayersPanel({ players, room, isLoading }) {
-  // players məlumatı gəlməyibsə və ya loading halındadırsa skeleton göstər
+  // skeleton
   if (isLoading || !players || players.length === 0) {
     return (
       <section className="bg-[#0c161e] backdrop-blur-sm rounded-xl p-2 sm:p-6 shadow-md mb-4">
@@ -29,7 +29,6 @@ export default function PlayersPanel({ players, room, isLoading }) {
     );
   }
 
-  // məlumat gəldikdə normal görünüş
   return (
     <section className="bg-[#0c161e] backdrop-blur-sm rounded-xl p-2 sm:p-6 shadow-md mb-4">
       <h2 className="text-base sm:text-xl font-semibold text-gray-400 mb-2 sm:mb-4 flex items-center gap-2">

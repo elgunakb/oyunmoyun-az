@@ -1,13 +1,12 @@
-import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { createPortal } from 'react-dom';
+import React, { useEffect, useRef } from 'react';
 
 export default function Modal({ open, onClose, titleId, children }) {
   const dialogRef = useRef(null);
 
   useEffect(() => {
     if (!open) return;
-    // ESC
     const onKey = (e) => e.key === 'Escape' && onClose?.();
     document.addEventListener('keydown', onKey);
 
