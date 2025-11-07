@@ -8,7 +8,6 @@ export default function AudioPlayer({ src, autoPlay = true }) {
   const [volume, setVolume] = useState(0.8);
   const [muted, setMuted] = useState(false);
 
-  // Avtomatik play və stop nəzarəti
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -17,13 +16,11 @@ export default function AudioPlayer({ src, autoPlay = true }) {
       audio.play().catch(() => {});
       setIsPlaying(true);
     }
-
     return () => {
       audio.pause();
     };
   }, [src]);
 
-  // Proqres yeniləməsi
   const handleTimeUpdate = () => {
     const audio = audioRef.current;
     if (audio && audio.duration) {
@@ -34,11 +31,8 @@ export default function AudioPlayer({ src, autoPlay = true }) {
   const togglePlay = () => {
     const audio = audioRef.current;
     if (!audio) return;
-    if (isPlaying) {
-      audio.pause();
-    } else {
-      audio.play().catch(() => {});
-    }
+    if (isPlaying) audio.pause();
+    else audio.play().catch(() => {});
     setIsPlaying(!isPlaying);
   };
 
@@ -67,7 +61,7 @@ export default function AudioPlayer({ src, autoPlay = true }) {
   };
 
   return (
-    <div className="w-full bg-white/10 border border-white/20 rounded-xl p-4 flex flex-col gap-2">
+    <div className="w-full bg-white/10 border border-white/20 rounded-xl p-4 flex flex-col gap-3">
       <audio
         ref={audioRef}
         src={src}
@@ -76,48 +70,52 @@ export default function AudioPlayer({ src, autoPlay = true }) {
       />
 
       {/* Controls */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-3">
         {/* Play / Pause */}
-        <button
-          onClick={togglePlay}
-          className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition"
-        >
-          {isPlaying ? (
-            <Pause className="w-5 h-5 text-white" />
-          ) : (
-            <Play className="w-5 h-5 text-white" />
-          )}
-        </button>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <button
+            onClick={togglePlay}
+            className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition"
+          >
+            {isPlaying ? (
+              <Pause className="w-5 h-5 text-white" />
+            ) : (
+              <Play className="w-5 h-5 text-white" />
+            )}
+          </button>
 
-        {/* Progress Bar */}
-        <input
-          type="range"
-          value={progress}
-          onChange={handleSeek}
-          className="flex-1 mx-3 accent-orange-500 cursor-pointer"
-        />
+          {/* Progress Bar */}
+          <input
+            type="range"
+            value={progress}
+            onChange={handleSeek}
+            className="flex-1 accent-orange-500 cursor-pointer w-full sm:w-60"
+          />
+        </div>
 
-        {/* Volume */}
-        <button
-          onClick={toggleMute}
-          className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition"
-        >
-          {muted ? (
-            <VolumeX className="w-5 h-5 text-white" />
-          ) : (
-            <Volume2 className="w-5 h-5 text-white" />
-          )}
-        </button>
+        {/* Volume Controls */}
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-center sm:justify-end">
+          <button
+            onClick={toggleMute}
+            className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition"
+          >
+            {muted ? (
+              <VolumeX className="w-5 h-5 text-white" />
+            ) : (
+              <Volume2 className="w-5 h-5 text-white" />
+            )}
+          </button>
 
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.05"
-          value={volume}
-          onChange={handleVolumeChange}
-          className="w-24 accent-orange-500 cursor-pointer"
-        />
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            value={volume}
+            onChange={handleVolumeChange}
+            className="w-full sm:w-24 accent-orange-500 cursor-pointer"
+          />
+        </div>
       </div>
     </div>
   );

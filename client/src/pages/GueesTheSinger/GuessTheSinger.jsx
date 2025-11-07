@@ -1,5 +1,5 @@
 import socket from '../../lib/socket';
-import { Timer, Volume2, Crown } from 'lucide-react';
+import { Timer, Volume2 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 
@@ -192,68 +192,50 @@ export default function GameSingerSolo() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto w-full mt-6">
+    <div className="max-w-4xl mx-auto w-full mt-6 px-3 sm:px-6">
       <div className="bg-[#0c161e] backdrop-blur-sm rounded-xl shadow-md flex flex-col min-h-[500px] p-4 sm:p-8 overflow-hidden">
-        {/* Header */}
-        <div className="hidden sm:flex flex-col sm:flex-row items-center gap-2 mb-4 rounded-2xl border border-white/10 bg-white/5 p-2 sm:p-4">
-          {/* round sayi */}
-          <div className="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-2">
-            <div className="flex items-center gap-2">
-              {/* roundun sayi */}
-              <div className="border-white/10 bg-white/5 border text-white font-bold px-2 sm:px-4 py-2 rounded-lg flex items-center justify-center gap-1 sm:gap-2 min-w-[80px] sm:min-w-[100px]">
-                <b>{roundIndex + 1}</b>/<b>{totalRounds}</b>
-              </div>
-              {/* <span className="text-lg text-gray-500 hidden sm:inline">
-                Round
-              </span> */}
+        {/* ===== HEADER ===== */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 rounded-2xl border border-white/10 bg-white/5 p-3 sm:p-4 text-white">
+          {/* Round info */}
+          <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
+            <div className="border border-white/10 bg-white/5 px-4 py-2 rounded-lg font-bold text-center min-w-[80px]">
+              {roundIndex + 1}/{totalRounds}
             </div>
           </div>
 
-          {/* saniye */}
-          <div className="hidden sm:flex items-center justify-center grow">
-            <div className="border-white/10 bg-white/5 border px-6 py-2 rounded-lg shadow-sm flex items-center gap-2">
+          {/* Timer */}
+          <div className="flex items-center justify-center w-full sm:w-auto">
+            <div className="border border-white/10 bg-white/5 px-5 py-2 rounded-lg flex items-center gap-2">
               <Timer className="w-4 h-4 text-white" />
-              <span className="font-medium text-lg text-white">{timeLeft}</span>
-              <span className="font-medium text-white">s</span>
+              <span className="font-medium text-lg">{timeLeft}</span>
+              <span className="text-sm text-white/70">s</span>
             </div>
           </div>
 
-          {/* kateqoriya */}
-          <div className="sm:flex items-center justify-center">
-            <div className="border-white/10 bg-white/5 border px-6 py-2 rounded-lg shadow-sm flex items-center gap-2">
-              <img src="" alt="" />
-              <span className="truncate max-w-[120px] text-white">
-                Xal: <b>{score}</b>
-              </span>
+          {/* Score */}
+          <div className="flex items-center justify-center w-full sm:w-auto">
+            <div className="border border-white/10 bg-white/5 px-5 py-2 rounded-lg flex items-center gap-2">
+              <span className="text-white/80">Xal:</span>
+              <b>{score}</b>
             </div>
           </div>
+        </div>
 
-          {/* <div className="text-lg text-white ">Oyun: Oxuyanı tap</div> */}
-          <div className="flex items-center gap-2">
-            {/* <Timer className="w-4 h-4" />
-            <span className="font-bold">{timeLeft}s</span> */}
+        {/* ===== MID SECTION ===== */}
+        <div className="flex items-center justify-center text-center rounded-2xl border border-white/10 bg-white/5 p-4 mb-4">
+          <div className="text-lg sm:text-xl font-semibold text-white">
+            Oxuyanı tap
           </div>
         </div>
-        <div className="hidden sm:flex h-[120px] flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/5 p-4 relative">
-          <div className="text-lg text-white ">Oxuyanı tap</div>
-        </div>
 
-        {/* Round & Score */}
-        <div className="flex items-center justify-between">
-          <div className="text-base text-white">
-            {/* Round <b>{roundIndex + 1}</b>/<b>{totalRounds}</b> */}
-          </div>
-          <div className="text-base">{/* Xal: <b>{score}</b> */}</div>
-        </div>
-
-        {/* Audio + artwork */}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5 mt-4">
+        {/* ===== AUDIO SECTION ===== */}
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
-              <Volume2 className="w-5 h-5" />
+              <Volume2 className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="text-sm text-white/70 ">
+              <div className="text-sm text-white/70">
                 Dinlə və müğənnini seç
               </div>
               {reveal?.title && (
@@ -263,13 +245,10 @@ export default function GameSingerSolo() {
               )}
             </div>
           </div>
-
-          <div className="flex items-center gap-4">
-            <AudioPlayer key={question?.id} src={question?.audio} autoPlay />
-          </div>
+          <AudioPlayer key={question?.id} src={question?.audio} autoPlay />
         </div>
 
-        {/* Options */}
+        {/* ===== OPTIONS ===== */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 text-white">
           {question?.options?.map((opt) => {
             const isCorrect = reveal?.correctArtist === opt;
@@ -285,7 +264,7 @@ export default function GameSingerSolo() {
                 disabled={locked}
                 onClick={() => answer(opt)}
                 className={[
-                  'px-6 py-4 rounded-xl border text-left',
+                  'px-6 py-4 rounded-xl border text-left transition',
                   locked
                     ? isCorrect
                       ? 'border-green-500/50 bg-green-500/15'
