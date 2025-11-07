@@ -13,8 +13,11 @@ import RoomMeta from '../../components/WaitingRoom/components/RoomMeta';
 import PlayersPanel from '../../components/WaitingRoom/components/PlayersPanel';
 import PasswordModal from '../../components/WaitingRoom/components/PasswordModal';
 import socket from '../../lib/socket';
+import usePageTitle from '../../components/PageTitle';
 
 export default function WaitingRoom() {
+  usePageTitle('Quisor — Waiting room');
+
   const { code } = useParams();
   const navigate = useNavigate();
   const [search] = useSearchParams();

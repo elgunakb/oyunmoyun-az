@@ -17,7 +17,7 @@ export const LANGUAGE_OPTIONS = [
 
 export const NAV_LINKS = [
   {
-    href: '#',
+    href: '/',
     label: 'Ana səhifə',
   },
   {

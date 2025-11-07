@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { NAV_LINKS } from '../../utils/Options';
+import { Link } from 'react-router-dom';
 
 export default function Navbar() {
   return (
@@ -9,13 +10,13 @@ export default function Navbar() {
         <div className="flex items-center justify-center py-1">
           <div className="flex items-center gap-1 text-[#EEEEEE]">
             {NAV_LINKS.map((link) => (
-              <a
+              <Link
                 key={link.label}
-                href={link.href}
+                to={link.href}
                 className="transition-all duration-200 py-0.5 px-1.5 text-sm font-mono rounded hover:bg-white/5 hover:text-white/80"
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
           </div>
         </div>

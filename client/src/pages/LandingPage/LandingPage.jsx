@@ -13,9 +13,9 @@ function useAccordionState(initialOpenIds = []) {
 }
 
 export default function LandingPage() {
-  usePageTitle('QuiZone — ');
+  usePageTitle('Quisor');
 
-  // accordion default
+  // accordion default—
   const { isOpen, toggle } = useAccordionState(['multiplayer', 'singleplayer']);
 
   return (

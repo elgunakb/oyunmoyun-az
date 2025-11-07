@@ -1,8 +1,9 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 import Navbar from '../Navbar/Navbar';
+import Logo from '../../assets/img/quisor_logo.svg';
 import { useAuth } from '../../context/AuthContext';
-import Logo from '../../assets/img/oyunmoyun-logo.svg';
 import LanguageSelector from '../LanguageSelector/LanguageSelector';
 import ProfileDropDownMenu from '../ProfileDropDownMenu/ProfileDropDownMenu';
 
@@ -16,8 +17,8 @@ export default function Header() {
 
         <div className="relative z-10 grid items-center h-[100px] px-4 sm:px-6 grid-cols-2 md:grid-cols-[1fr_auto_1fr]">
           {/* Logo */}
-          <a
-            href="/"
+          <Link
+            to="/"
             className="justify-self-start md:justify-self-center md:col-start-2 block"
           >
             <div className="h-[76px] sm:h-[84px] w-auto relative transform hover:-rotate-1 hover:scale-105 transition-all duration-300">
@@ -27,7 +28,7 @@ export default function Header() {
                 className="h-full w-auto object-contain block"
               />
             </div>
-          </a>
+          </Link>
 
           <div className="justify-self-end md:col-start-3 relative z-50 overflow-visible">
             <div className="flex items-center gap-3">

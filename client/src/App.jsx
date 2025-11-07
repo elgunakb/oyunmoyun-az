@@ -23,9 +23,8 @@ const App = () => {
   return (
     <>
       <AuthProvider>
-        <Header />
-
         <Router>
+          <Header />
           <Routes>
             <Route path="/auth/callback" element={<AuthCallback />} />
 

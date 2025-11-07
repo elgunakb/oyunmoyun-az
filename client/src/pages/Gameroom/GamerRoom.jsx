@@ -8,8 +8,11 @@ import React, {
 } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import socket from '../../lib/socket';
+import usePageTitle from '../../components/PageTitle';
 
 export default function GameRoom() {
+  usePageTitle('Quisor — Ad, şəhər oyunu');
+
   const { code: roomId } = useParams();
   const { state } = useLocation();
   const navigate = useNavigate();
